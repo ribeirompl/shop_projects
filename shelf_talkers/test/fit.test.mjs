@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import {
   REF, LINE_H, MIN_RATIO,
-  lineSize, nudge, blockSeed, bisect, stackSizes, compactPositions
+  lineSize, nudge, blockSeed, bisect, stackSizes, justifiedStack, compactPositions
 } from '../src/fit.js';
 
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg} (${a} vs ${b})`);
@@ -110,6 +110,98 @@ test('every line respects the minimum, and an empty stack is not an error', () =
   const sizes = stackSizes({ w:1, h:1 }, [9999, 9999], 14);
   assert.deepEqual(sizes, [14, 14]);
   assert.deepEqual(stackSizes({ w:200, h:200 }, [], 1), []);
+});
+
+/* ---- the justified headline --------------------------------------------- */
+
+/* The ink a line actually covers: its natural width scaled to the chosen
+   size, plus one tracking step per gap. The trailing step CSS adds after the
+   last glyph is not ink, which is the whole reason these lines are left
+   aligned — so it is not counted here either. */
+const ink = (natW, r, chars) => natW * r.size / REF + r.track * (chars - 1);
+
+test('BEST over BUY: one size for both, and both reach the far edge', () => {
+  const box = { w:200, h:10000 };            // height is not the constraint
+  // BUY is a letter shorter, so at REF it measures narrower than BEST.
+  const [best, buy] = justifiedStack(box, [{ w:400, chars:4 }, { w:300, chars:3 }], 1, 10000);
+
+  assert.equal(best.size, buy.size, 'the shorter word is not printed larger');
+  near(best.size, 50, 'sized by the widest line, so nothing overflows');
+
+  near(ink(400, best, 4), 200, 'BEST spans the box');
+  near(ink(300, buy,  3), 200, 'BUY spans it too, on tracking alone');
+  assert.ok(buy.track > best.track, 'the shorter word takes more of the slack');
+});
+
+test('the widest line sets the size and needs no tracking of its own', () => {
+  const [wide, narrow] =
+    justifiedStack({ w:300, h:10000 }, [{ w:600, chars:5 }, { w:300, chars:3 }], 1, 10000);
+
+  near(wide.track, 0, 'already fills the width');
+  assert.ok(narrow.track > 0, 'the other one does not');
+});
+
+test('a short box is limited by height, and every line still fits it', () => {
+  // Two lines at LINE_H each must fit 100px: 50px a line before rounding.
+  const r = justifiedStack({ w:100000, h:100 }, [{ w:10, chars:2 }, { w:10, chars:2 }], 1, 10000);
+  assert.ok(r[0].size <= 100 / (2 * LINE_H) + 1e-9, 'the stack fits its box');
+  assert.equal(r[0].size, r[1].size);
+});
+
+test('tracking never goes negative, and a single glyph is left alone', () => {
+  // A line wider than its box would otherwise ask for negative tracking,
+  // which would pull the letters into each other.
+  const r = justifiedStack({ w:10, h:10000 }, [{ w:100, chars:4 }], 1, 10000);
+  assert.ok(r[0].track >= 0, 'letters are never pulled together');
+
+  // One glyph has no gaps to spread slack over; dividing by zero would give
+  // Infinity and blow the line off the sheet.
+  const one = justifiedStack({ w:200, h:10000 }, [{ w:20, chars:1 }], 1, 10000);
+  assert.ok(Number.isFinite(one[0].track), 'no divide-by-zero on one letter');
+});
+
+test('an outline is left room for, so the stroke is not clipped at the edge', () => {
+  const line = [{ w:200, chars:4 }];
+  const box  = { w:200, h:10000 };
+
+  const bare = justifiedStack(box, line, 1, 10000)[0];
+  near(bare.size, 100, 'unstroked text fills the box exactly');
+
+  // 0.2em of outline means the glyphs paint 0.2 * size wider than they measure.
+  const outlined = justifiedStack(box, line, 1, 10000, { outset:0.2 })[0];
+  assert.ok(outlined.size < bare.size, 'sized down to make room');
+
+  // Up against the edge, never over it: sizes round down by design, so this
+  // may land a rounding step short but must never land past 200.
+  const painted = 200 * outlined.size / REF + 0.2 * outlined.size;
+  assert.ok(painted <= 200,        `ink plus outline stays inside (${painted})`);
+  assert.ok(painted >  200 - 0.05, `and does not waste the box (${painted})`);
+});
+
+test('tracking stops at the cap instead of spacing a word out', () => {
+  // BUY-shaped: a long way short of the box, so it wants a lot of tracking.
+  const lines = [{ w:400, chars:4 }, { w:200, chars:3 }];
+
+  const free    = justifiedStack({ w:400, h:1e5 }, lines, 1, 10000)[1];
+  const capped  = justifiedStack({ w:400, h:1e5 }, lines, 1, 10000, { maxTrack:0.1 })[1];
+
+  assert.ok(free.track > capped.track, 'the cap bites');
+  near(capped.track, 0.1 * capped.size, 'and stops exactly there');
+
+  // A line that needs less than the cap is unaffected by it.
+  const easy = justifiedStack({ w:410, h:1e5 }, [{ w:400, chars:4 }], 1, 10000,
+                              { maxTrack:10 })[0];
+  assert.ok(easy.track < 10 * easy.size, 'the cap is a ceiling, not a target');
+});
+
+test('the size floor and ceiling are respected, and an empty stack is safe', () => {
+  const floored = justifiedStack({ w:1, h:1 }, [{ w:9999, chars:4 }], 14, 10000);
+  assert.equal(floored[0].size, 14);
+
+  const capped = justifiedStack({ w:10000, h:10000 }, [{ w:10, chars:4 }], 1, 60);
+  assert.equal(capped[0].size, 60);
+
+  assert.deepEqual(justifiedStack({ w:200, h:200 }, [], 1, 10000), []);
 });
 
 /* ---- reclaiming dead space ---------------------------------------------- */

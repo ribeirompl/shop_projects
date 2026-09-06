@@ -11,24 +11,37 @@
      Talker-* are subsetted woff2 faces base64'd into this file by build.js,
      so the output is identical on any machine. The local names after them
      are only a safety net if a build ever ships without the fonts.
-       Talker-Slab   = Cooper Black
+       Talker-Slab   = Cooper Black   (kept, but nothing asks for it now:
+                                       BRILLIANT BUYS moved to Talker-Black)
        Talker-Black  = Arial Black
        Talker-Narrow = Arial Narrow Bold
        Talker-Item   = Times New Roman Bold Italic                         */
-  --f-slab:   'Talker-Slab',   'Cooper Black', Georgia, serif;       /* BRILLIANT BUYS headline */
+  --f-slab:   'Talker-Slab',   'Cooper Black', Georgia, serif;       /* unused — see below      */
   --f-black:  'Talker-Black',  'Arial Black', Impact, sans-serif;    /* BEST BUY headline       */
   --f-narrow: 'Talker-Narrow', 'Arial Narrow', Arial, sans-serif;    /* small print             */
   --f-item:   'Talker-Item',   'Times New Roman', Georgia, serif;    /* name / price / detail   */
   --f-wool:   'Talker-Black',  'Arial Black', sans-serif;            /* WOOL column wordmark    */
 
-  /* ---- design colours --------------------------------------------------- */
-  --bb-red-from:#ED1C24;
-  --bb-red-mid: #E01820;
-  --bb-red-to:  #C1121C;
-  --bb-yellow:  #FFD400;
+  /* ---- design colours ---------------------------------------------------
+     BEST BUY and BRILLIANT BUYS both run the house palette. Sampled straight
+     out of the OK Foods artwork: the panel green, the logo red, white.     */
+  --ok-green:  #074531;
+  --ok-red:    #EB1D24;
+  --ok-white:  #ffffff;
 
-  --brill-bar:  #FBDF8B;
-  --brill-red:  #C1121C;
+  /* The green panels. designs.js draws BEST BUY's as a two-stop ramp; both
+     stops are the same green because the reference artwork is flat. Give
+     them different values here to bring a gradient back. */
+  --bb-panel-from: var(--ok-green);
+  --bb-panel-to:   var(--ok-green);
+  --brill-bar:     var(--ok-green);
+
+  /* Both promo headlines are red on that green with a solid white outline
+     and no shadow. Flat red on this green measures about 2.5:1, so the
+     outline is what carries the headline across a shop floor — keep it if
+     you move either colour. */
+  --promo-headline: var(--ok-red);
+  --promo-outline:  var(--ok-white);
 
   /* Sampled straight out of wool.png — the bar must match the logo's own
      background exactly or a seam shows where the two meet. */
@@ -115,7 +128,15 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .pop-foot input{width:52px;font:inherit;padding:5px 7px;border:1px solid var(--rule);border-radius:6px}
 
 /* ---- item table ---- */
-.table-head,.row{display:grid;grid-template-columns:26px 1fr 140px 118px 58px;gap:8px;align-items:start}
+/* Name was taking every spare pixel while Price — which holds two lines
+   often enough to matter — was pinned narrow. All three text columns are
+   fractional now, so the balance holds at any pane width instead of only the
+   wide one. minmax(0,…) rather than a bare fr: a grid item's default minimum
+   is min-content, so one long unbreakable word would otherwise stretch its
+   track and squeeze the others. */
+.table-head,.row{display:grid;
+  grid-template-columns:26px minmax(0,1.5fr) minmax(0,1fr) minmax(0,.75fr) 58px;
+  gap:8px;align-items:start}
 .table-head{padding:0 2px 6px}
 .th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .rows{display:flex;flex-direction:column;gap:6px}
@@ -126,7 +147,11 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .grip{cursor:grab;color:#b6bcc4;text-align:center;padding-top:8px;user-select:none;font-size:15px}
 .row input,.row textarea{font:inherit;width:100%;padding:7px 9px;border:1px solid var(--rule);
      border-radius:7px;background:#fff;color:var(--ink);text-transform:uppercase}
-.row textarea{resize:vertical;min-height:36px;line-height:1.3;overflow:hidden}
+/* autoGrow() in app.js sets the height from scrollHeight on every keystroke,
+   so the box is always exactly as tall as its content — hence overflow:hidden
+   (there is nothing to scroll to) and resize:none (a dragged height would be
+   overwritten by the next character typed). */
+.row textarea{resize:none;min-height:36px;line-height:1.3;overflow:hidden}
 .row input:focus,.row textarea:focus{outline:2px solid #b9d4f5;outline-offset:-1px;border-color:var(--accent)}
 .row-acts{display:flex;gap:2px;padding-top:3px}
 .icon-btn{border:0;background:transparent;color:#aab0b8;cursor:pointer;font-size:14px;padding:4px 5px;
@@ -176,6 +201,16 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .slot.va-c{align-items:center} .slot.va-t{align-items:flex-start} .slot.va-b{align-items:flex-end}
 .slot.ha-c{justify-content:center} .slot.ha-l{justify-content:flex-start} .slot.ha-r{justify-content:flex-end}
 .slot.ha-c > .txt{text-align:center} .slot.ha-l > .txt{text-align:left} .slot.ha-r > .txt{text-align:right}
+
+/* Small print sits on the floor of its band in every design, rather than
+   floating in the middle of it. Its band is sized for the longest blurb, so
+   a centred short one drifts and reads as a stray line; pinned to the bottom
+   it reads as a footer whatever it says, and the slack collects above it
+   where the sign wants air anyway. One rule for all three designs — it wins
+   over the .va-c the slot() helper defaults to because it comes later at
+   equal specificity. BRILLIANT BUYS is unaffected: its blurb is rotated
+   inside an absolutely-positioned .blurb-rot, which align-items cannot move. */
+.slot.blurb{align-items:flex-end}
 .slot .nowrap{white-space:nowrap}
 .slot .line{white-space:nowrap}
 
@@ -184,9 +219,30 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .price-stack{flex-direction:column}
 .price-stack > .line{line-height:1.05;flex:none;width:100%}
 
+/* ---- the headline both promo designs share ----
+   Heavy sans, all caps (the .slot rule uppercases), red with a solid white
+   outline. Set on the slot rather than the text so it covers both shapes:
+   BEST BUY wide stacks BEST/BUY as two .line children, BRILLIANT BUYS is one
+   .txt — every property here inherits, paint-order included. The stroke is
+   in em so it stays proportional as fit.js resizes the headline across
+   layouts, and paint-order puts it behind the fill; without that the stroke
+   is centred on the outline and eats half the letterform. */
+.d-bestbuy .headline,.d-brilliant .headline{
+  font-family:var(--f-black);color:var(--promo-headline);line-height:.94}
+/* Anything sized in em has to sit on the text, not the slot: fit.js sets
+   font-size on the .txt child, while the slot keeps the 14px it inherited.
+   An em on the slot resolves against that 14px and inherits down as a frozen
+   pixel value — the outline would stop tracking the headline and print
+   proportionally twice as heavy at 8-up as at 1-up.
+   line-height deliberately stays above: on .txt it would outrank
+   .price-stack > .line and desync BEST BUY's stacked headline from LINE_H.
+   paint-order puts the stroke behind the fill; centred on the outline it
+   would eat half the letterform. */
+.d-bestbuy .headline > .txt,.d-brilliant .headline > .txt{
+  letter-spacing:-.01em;-webkit-text-stroke:0.12em var(--promo-outline);
+  paint-order:stroke fill}
+
 /* ---- BEST BUY ---- */
-.d-bestbuy .headline{font-family:var(--f-black);color:var(--bb-yellow);line-height:.94;
-                     letter-spacing:-.01em}
 .d-bestbuy .blurb{font-family:var(--f-narrow);font-weight:700;color:#fff;line-height:1.28}
 .d-bestbuy .name,.d-bestbuy .price,.d-bestbuy .detail{
   font-family:var(--f-item);font-weight:700;font-style:italic;color:#000}
@@ -194,13 +250,6 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .d-bestbuy .price{line-height:1.02}
 
 /* ---- BRILLIANT BUYS ---- */
-/* "Brilliant Buys!" is artwork, not user text — it keeps its mixed case. */
-.d-brilliant .headline{text-transform:none}
-/* Shadow offset is 0.037em ≈ the 2px-at-54px you asked for, so it stays
-   proportional as the headline resizes across layouts. */
-.d-brilliant .headline > .txt{font-family:var(--f-slab);color:var(--brill-red);line-height:1;
-  -webkit-text-stroke:0.085em #fff;paint-order:stroke fill;
-  text-shadow:0.037em 0.037em 0 rgba(48,30,10,.6)}
 .d-brilliant .blurb{font-family:var(--f-narrow);font-weight:700;color:#000;line-height:1.25}
 /* The rotated small print is positioned, not flexed: as a flex child its
    pre-rotation width would be shrunk to the narrow strip and collapse. */

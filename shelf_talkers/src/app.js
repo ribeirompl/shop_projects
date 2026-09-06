@@ -85,6 +85,9 @@ function el2(tag, cls, parent){
   return n;
 }
 
+/* Grow a field to its content instead of making the user scroll inside it.
+   Only reads back correctly once the row is in the document: scrollHeight on
+   a detached node is 0, which would open every field at the 36px floor. */
 function autoGrow(ta){
   ta.style.height = 'auto';
   ta.style.height = Math.max(36, ta.scrollHeight) + 'px';
@@ -102,8 +105,10 @@ function renderTable(){
     grip.textContent = '⠿';
     grip.title = 'Drag to reorder';
 
-    const name = el2('input', '', row);
-    name.value = item.name; name.placeholder = 'Item name';
+    /* A textarea, not an input: names run long, and wrapping them into view
+       beats scrolling a one-line box you cannot read the middle of. */
+    const name = el2('textarea', 'f-name', row);
+    name.value = item.name; name.rows = 1; name.placeholder = 'Item name';
 
     const price = el2('textarea', '', row);
     price.value = item.price; price.rows = 1;
@@ -117,11 +122,12 @@ function renderTable(){
     const dup = el2('button', 'icon-btn', acts); dup.textContent = '⧉'; dup.title = 'Duplicate';
     const del = el2('button', 'icon-btn del', acts); del.textContent = '✕'; del.title = 'Delete';
 
-    name.oninput   = () => { item.name   = name.value;   touch(); };
+    name.oninput   = () => { item.name   = name.value;   autoGrow(name);  touch(); };
     detail.oninput = () => { item.detail = detail.value; touch(); };
     price.oninput  = () => { item.price  = price.value;  autoGrow(price); touch(); };
-    autoGrow(price);
 
+    /* Enter adds a row rather than a newline — a name is always one line, and
+       the price splits on Enter through its own handler in text.js. */
     name.onkeydown = e => {
       if (e.key === 'Enter'){ e.preventDefault(); addItemAfter(idx); }
     };
@@ -138,6 +144,7 @@ function renderTable(){
 
     wireDrag(row, grip, idx);
     host.appendChild(row);
+    autoGrow(name); autoGrow(price);   // in the document by now, so measurable
   });
 }
 
@@ -145,8 +152,8 @@ function addItemAfter(idx){
   state.items.splice(idx + 1, 0, newItem());
   refresh();
   const rows = $$('#rows .row');
-  const input = rows[idx + 1] && rows[idx + 1].querySelector('input');
-  if (input) input.focus();
+  const field = rows[idx + 1] && rows[idx + 1].querySelector('.f-name');
+  if (field) field.focus();
 }
 
 /* ---- drag to reorder ---- */

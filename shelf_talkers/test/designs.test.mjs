@@ -113,7 +113,7 @@ test('the price never runs into the detail, in any design or cell shape', () => 
   }
 });
 
-test('BEST BUY tall keeps the headline and small print inside the red banner', () => {
+test('BEST BUY tall keeps the headline and small print inside the green banner', () => {
   const L = bestbuyLayout(ctx(210, 297));
   assert.equal(L.wide, false);
   assert.ok(L.headline.y + L.headline.h <= L.panel.h, 'headline sits in the banner');
@@ -124,7 +124,7 @@ test('BRILLIANT BUYS runs its small print up the left edge, clear of the bar', (
   const L = brilliantLayout(ctx(210, 297));
   assert.ok(L.blurb.w < L.blurb.h, 'a tall, narrow strip');
   assert.ok(L.blurb.x < 0.05, 'hard against the left edge');
-  assert.ok(L.blurb.y >= L.panel.h, 'starts below the yellow bar');
+  assert.ok(L.blurb.y >= L.panel.h, 'starts below the green bar');
 });
 
 /* ---- WOOL's logo bar ----------------------------------------------------- */

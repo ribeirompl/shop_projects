@@ -42,6 +42,11 @@ const rect = (x, y, w, h) => ({ x, y, w, h });
    height — below this the sign is unreadable across a shop floor. */
 const MIN_FRACTION = 0.018;
 
+/* Small print is capped per design in `maxPx.blurb`, not left to fill its
+   box. Left uncapped it grows to whatever the box allows and starts
+   competing with the headline; the caps hold it near a tenth of the
+   headline's size, which is where it stops reading as part of the offer. */
+
 /* ==========================================================================
    GEOMETRY — pure, no DOM
    ========================================================================== */
@@ -64,7 +69,7 @@ export function bestbuyLayout(ctx){
       name:     rect(.335, .04, .635, .36),
       price:    rect(.335, .42, .44, .54),
       detail:   rect(.78, .62, .20, .22),
-      maxPx:    { blurb: .055 * ctx.cellH, detail: .10 * ctx.cellH }
+      maxPx:    { blurb: .020 * ctx.cellH, detail: .10 * ctx.cellH }
     };
   }
 
@@ -79,7 +84,7 @@ export function bestbuyLayout(ctx){
        cell — at 3×2 they were touching. */
     price:    rect(.05, .55, .58, .36),
     detail:   rect(.70, .72, .27, .16),
-    maxPx:    { blurb: .038 * ctx.cellH, detail: .09 * ctx.cellH }
+    maxPx:    { blurb: .015 * ctx.cellH, detail: .09 * ctx.cellH }
   };
 }
 
@@ -87,7 +92,7 @@ export function brilliantLayout(ctx){
   const wide = ctx.aspect >= ASPECT_SPLIT;
   const min  = MIN_FRACTION * ctx.cellH;
 
-  const bar     = (wide ? 26 : 19) / 100;         // yellow bar, fraction of height
+  const bar     = (wide ? 26 : 19) / 100;         // green bar, fraction of height
   const blurbY  = bar + .015;
   const bodyTop = bar + .04;
   const priceY  = bodyTop + .32;
@@ -102,7 +107,7 @@ export function brilliantLayout(ctx){
     name:     rect(.10, bodyTop, .86, .30),
     price:    rect(.10, priceY, .56, .94 - priceY),
     detail:   rect(.66, .70, .30, .18),
-    maxPx:    { blurb: .030 * ctx.cellH, detail: .11 * ctx.cellH }
+    maxPx:    { blurb: .018 * ctx.cellH, detail: .11 * ctx.cellH }
   };
 }
 
@@ -249,13 +254,13 @@ export const BestBuy = {
     const tasks = [];
     cell.classList.add('d-bestbuy');
 
-    /* ---- red panel ---- */
+    /* ---- green panel ---- */
     const gid = 'bbg' + (++uid);
     const svg = svgEl('svg', { class:'panel', preserveAspectRatio:'none', viewBox:'0 0 100 100' });
     const defs = svgEl('defs');
     const grad = svgEl('linearGradient', { id: gid, ...L.gradient });
-    grad.appendChild(styled(svgEl('stop', { offset:'0' }), { 'stop-color':'var(--bb-red-from)' }));
-    grad.appendChild(styled(svgEl('stop', { offset:'1' }), { 'stop-color':'var(--bb-red-to)'   }));
+    grad.appendChild(styled(svgEl('stop', { offset:'0' }), { 'stop-color':'var(--bb-panel-from)' }));
+    grad.appendChild(styled(svgEl('stop', { offset:'1' }), { 'stop-color':'var(--bb-panel-to)'   }));
     defs.appendChild(grad);
     svg.appendChild(defs);
     svg.appendChild(svgEl('rect', {
@@ -266,12 +271,16 @@ export const BestBuy = {
     cell.appendChild(svg);
 
     if (L.wide){
-      /* BEST / BUY stacked — sized by the same stack fitter as the price, so
-         the two words fill the column without fighting over its height. */
+      /* BEST / BUY stacked. Justified, not stacked like a price: the price
+         fitter sizes each line on its own width, which would print BUY
+         larger than BEST purely because it is a letter shorter. Here both
+         words take one size and tracking takes up the difference, so they
+         read as the same size and still square off against both edges. */
       const hs = slot(cell, 'headline price-stack', L.headline);
       hs.style.flexDirection = 'column';
       const hl = ['BEST','BUY'].map(w => text(hs, 'line', w, true));
-      tasks.push({ slot: hs, lines: hl, kind:'stack', min: L.min });
+      tasks.push({ slot: hs, lines: hl, kind:'justified', min: L.min, max: 10000,
+                   maxTrack: 0.14 });   // em; past this BUY reads as B U Y
     } else {
       const hs = slot(cell, 'headline', L.headline, 'va-c ha-l');
       tasks.push({ slot: hs, txt: text(hs, 'h', 'BEST BUY', true),
@@ -299,7 +308,7 @@ export const BestBuy = {
 /* ==========================================================================
    BRILLIANT BUYS
    --------------------------------------------------------------------------
-   Yellow bar across the top in both arrangements; the small print runs
+   Green bar across the top in both arrangements; the small print runs
    bottom-to-top along the left edge.
    ========================================================================== */
 
