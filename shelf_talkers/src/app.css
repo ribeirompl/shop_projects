@@ -1,0 +1,237 @@
+/* ==========================================================================
+   Shelf Talkers
+   --------------------------------------------------------------------------
+   Two blocks below:
+     1. APP CHROME   — the editor UI. Never printed.
+     2. SHEET        — the artwork. Printed. All geometry in mm / cell-relative.
+   ========================================================================== */
+
+:root{
+  /* ---- typefaces -------------------------------------------------------
+     Talker-* are subsetted woff2 faces base64'd into this file by build.js,
+     so the output is identical on any machine. The local names after them
+     are only a safety net if a build ever ships without the fonts.
+       Talker-Slab   = Cooper Black
+       Talker-Black  = Arial Black
+       Talker-Narrow = Arial Narrow Bold
+       Talker-Item   = Times New Roman Bold Italic                         */
+  --f-slab:   'Talker-Slab',   'Cooper Black', Georgia, serif;       /* BRILLIANT BUYS headline */
+  --f-black:  'Talker-Black',  'Arial Black', Impact, sans-serif;    /* BEST BUY headline       */
+  --f-narrow: 'Talker-Narrow', 'Arial Narrow', Arial, sans-serif;    /* small print             */
+  --f-item:   'Talker-Item',   'Times New Roman', Georgia, serif;    /* name / price / detail   */
+  --f-wool:   'Talker-Black',  'Arial Black', sans-serif;            /* WOOL column wordmark    */
+
+  /* ---- design colours --------------------------------------------------- */
+  --bb-red-from:#ED1C24;
+  --bb-red-mid: #E01820;
+  --bb-red-to:  #C1121C;
+  --bb-yellow:  #FFD400;
+
+  --brill-bar:  #FBDF8B;
+  --brill-red:  #C1121C;
+
+  /* Sampled straight out of wool.png — the bar must match the logo's own
+     background exactly or a seam shows where the two meet. */
+  --wool-blue:  #1b9ed2;
+  --wool-pink:  #F09BE0;
+
+  /* ---- sheet ------------------------------------------------------------ */
+  --sheet-margin: 4mm;      /* minimal, inside every office printer's dead zone */
+  --hairline: 0.2mm;
+  --hairline-ink: #c2c2c2;
+
+  /* ---- UI --------------------------------------------------------------- */
+  --ink:#171a1f; --muted:#6b7280; --rule:#e4e7eb; --bg:#f4f6f8; --card:#fff;
+  --accent:#1668c7; --danger:#c0392b;
+}
+
+/* ==========================================================================
+   1. APP CHROME
+   ========================================================================== */
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font:14px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+
+#app{display:flex;flex-direction:column;height:100vh}
+
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--card);
+        border-bottom:1px solid var(--rule);flex:0 0 auto}
+.brand{font-weight:700;letter-spacing:.02em}
+.topbar-spacer{flex:1}
+.print-hint{font-size:12px;color:var(--muted)}
+.print-hint b{color:var(--ink);font-weight:600}
+
+.btn{font:inherit;border:1px solid var(--rule);background:#fff;color:var(--ink);
+     padding:7px 13px;border-radius:7px;cursor:pointer}
+.btn:hover{background:#f1f3f5}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn-primary:hover{background:#12579f}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--muted);padding:6px 10px}
+.btn-ghost:hover{background:#eceff2;color:var(--ink)}
+.btn-danger:hover{color:var(--danger)}
+
+.panes{flex:1;display:grid;grid-template-columns:minmax(430px,1fr) minmax(380px,42%);
+       min-height:0}
+.pane{min-height:0;overflow:auto}
+.pane-left{background:var(--card);border-right:1px solid var(--rule);padding:14px 16px 40px}
+.pane-right{background:#e9edf1;padding:0}
+
+/* ---- controls ---- */
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin-bottom:16px}
+.ctl{display:flex;flex-direction:column;gap:5px}
+.ctl-label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.check{display:flex;align-items:center;gap:6px;font-size:13px;padding-bottom:7px;cursor:pointer}
+
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:12.5px;border:0;background:#fff;padding:8px 12px;cursor:pointer;
+            border-right:1px solid var(--rule);color:var(--muted);white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+.seg-sm button{padding:5px 12px;font-size:12px}
+
+.layout-btn{display:flex;align-items:center;gap:9px;font:inherit;background:#fff;cursor:pointer;
+            border:1px solid var(--rule);border-radius:8px;padding:5px 10px 5px 6px}
+.layout-btn:hover{background:#f1f3f5}
+.layout-btn-thumb{display:block;width:22px;height:30px}
+.layout-btn-text{font-size:13px}
+.caret{color:var(--muted);font-size:11px}
+
+/* ---- layout popover ---- */
+.pop{position:absolute;z-index:50;background:#fff;border:1px solid var(--rule);border-radius:12px;
+     box-shadow:0 12px 34px rgba(16,24,40,.18);padding:12px;width:344px}
+.pop-head{display:flex;justify-content:center;margin-bottom:10px}
+.pop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.lay{display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 4px;border-radius:8px;
+     border:1px solid transparent;background:transparent;cursor:pointer;font:inherit}
+.lay:hover{background:#f1f3f5}
+.lay[aria-pressed="true"]{border-color:var(--accent);background:#eaf2fc}
+.lay svg{display:block}
+.lay span{font-size:11px;color:var(--muted)}
+.lay[aria-pressed="true"] span{color:var(--accent);font-weight:600}
+.pop-foot{display:flex;align-items:center;gap:7px;margin-top:11px;padding-top:11px;
+          border-top:1px solid var(--rule);font-size:12.5px;color:var(--muted)}
+.pop-foot input{width:52px;font:inherit;padding:5px 7px;border:1px solid var(--rule);border-radius:6px}
+
+/* ---- item table ---- */
+.table-head,.row{display:grid;grid-template-columns:26px 1fr 140px 118px 58px;gap:8px;align-items:start}
+.table-head{padding:0 2px 6px}
+.th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{padding:2px;border-radius:8px}
+.row.dragging{opacity:.4}
+.row.drop-before{box-shadow:0 -2px 0 var(--accent)}
+.row.drop-after{box-shadow:0 2px 0 var(--accent)}
+.grip{cursor:grab;color:#b6bcc4;text-align:center;padding-top:8px;user-select:none;font-size:15px}
+.row input,.row textarea{font:inherit;width:100%;padding:7px 9px;border:1px solid var(--rule);
+     border-radius:7px;background:#fff;color:var(--ink);text-transform:uppercase}
+.row textarea{resize:vertical;min-height:36px;line-height:1.3;overflow:hidden}
+.row input:focus,.row textarea:focus{outline:2px solid #b9d4f5;outline-offset:-1px;border-color:var(--accent)}
+.row-acts{display:flex;gap:2px;padding-top:3px}
+.icon-btn{border:0;background:transparent;color:#aab0b8;cursor:pointer;font-size:14px;padding:4px 5px;
+          border-radius:6px;line-height:1}
+.icon-btn:hover{background:#eceff2;color:var(--ink)}
+.icon-btn.del:hover{color:var(--danger)}
+
+.table-foot{display:flex;align-items:center;gap:4px;margin-top:12px}
+.save-state{margin-left:auto;font-size:11.5px;color:var(--muted)}
+.tip{margin:14px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.6}
+.tip b{color:#4b5563}
+
+/* ---- preview ---- */
+.preview-bar{position:sticky;top:0;z-index:5;background:#e9edf1;padding:9px 16px;
+             border-bottom:1px solid #d7dde3}
+.preview-info{font-size:12px;color:var(--muted)}
+.preview{padding:16px}
+.sheet-wrap{position:relative;margin:0 auto 16px;filter:drop-shadow(0 3px 10px rgba(16,24,40,.16))}
+
+/* ==========================================================================
+   2. SHEET  (printed artwork)
+   ========================================================================== */
+
+.sheet{position:relative;background:#fff;overflow:hidden;
+       transform:scale(var(--scale,1));transform-origin:top left}
+
+.grid{position:absolute;inset:var(--sheet-margin);display:grid}
+
+/* Cells butt together; a hairline sits on internal shared edges only. */
+/* min-*:0 matters: grid items default to min-content sizing, which would let
+   an oversized text block stretch its track and break every measurement. */
+.cell{position:relative;overflow:hidden;min-width:0;min-height:0;
+      border-right:var(--hairline) solid var(--hairline-ink);
+      border-bottom:var(--hairline) solid var(--hairline-ink)}
+.cell.last-col{border-right:0}
+.cell.last-row{border-bottom:0}
+.cell.empty{background:#fff}
+
+/* Every coloured panel is an inline SVG layer, never a CSS background, so it
+   prints whether or not the browser's "Background graphics" box is ticked. */
+.panel{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* Text slots are absolutely positioned in % of the cell and hold a single
+   fitted block. fit.js sets font-size; nothing here may set it. */
+.slot{position:absolute;display:flex;overflow:hidden;text-transform:uppercase}
+.slot > .txt{width:100%}
+.slot.va-c{align-items:center} .slot.va-t{align-items:flex-start} .slot.va-b{align-items:flex-end}
+.slot.ha-c{justify-content:center} .slot.ha-l{justify-content:flex-start} .slot.ha-r{justify-content:flex-end}
+.slot.ha-c > .txt{text-align:center} .slot.ha-l > .txt{text-align:left} .slot.ha-r > .txt{text-align:right}
+.slot .nowrap{white-space:nowrap}
+.slot .line{white-space:nowrap}
+
+/* Price stack: line-height here must match LINE_H in fit.js. flex:none stops
+   the flex container squashing lines that are deliberately oversized. */
+.price-stack{flex-direction:column}
+.price-stack > .line{line-height:1.05;flex:none;width:100%}
+
+/* ---- BEST BUY ---- */
+.d-bestbuy .headline{font-family:var(--f-black);color:var(--bb-yellow);line-height:.94;
+                     letter-spacing:-.01em}
+.d-bestbuy .blurb{font-family:var(--f-narrow);font-weight:700;color:#fff;line-height:1.28}
+.d-bestbuy .name,.d-bestbuy .price,.d-bestbuy .detail{
+  font-family:var(--f-item);font-weight:700;font-style:italic;color:#000}
+.d-bestbuy .name{line-height:1.1}
+.d-bestbuy .price{line-height:1.02}
+
+/* ---- BRILLIANT BUYS ---- */
+/* "Brilliant Buys!" is artwork, not user text — it keeps its mixed case. */
+.d-brilliant .headline{text-transform:none}
+/* Shadow offset is 0.037em ≈ the 2px-at-54px you asked for, so it stays
+   proportional as the headline resizes across layouts. */
+.d-brilliant .headline > .txt{font-family:var(--f-slab);color:var(--brill-red);line-height:1;
+  -webkit-text-stroke:0.085em #fff;paint-order:stroke fill;
+  text-shadow:0.037em 0.037em 0 rgba(48,30,10,.6)}
+.d-brilliant .blurb{font-family:var(--f-narrow);font-weight:700;color:#000;line-height:1.25}
+/* The rotated small print is positioned, not flexed: as a flex child its
+   pre-rotation width would be shrunk to the narrow strip and collapse. */
+.d-brilliant .blurb-rot{position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%) rotate(-90deg);display:flex;align-items:center;
+  justify-content:center;text-align:center}
+.d-brilliant .name,.d-brilliant .price,.d-brilliant .detail{
+  font-family:var(--f-item);font-weight:700;font-style:italic;color:#000}
+
+/* ---- WOOL AND MORE ---- */
+.d-wool .logo{position:absolute;display:block}
+.d-wool .wordmark{font-family:var(--f-wool);font-weight:700;color:#fff;line-height:1.05;
+                  letter-spacing:.02em}
+.d-wool .blurb{font-family:var(--f-narrow);font-weight:700;color:#fff;line-height:1.25}
+.d-wool .name,.d-wool .price,.d-wool .detail{font-family:var(--f-item);font-weight:700;color:#000}
+
+/* ==========================================================================
+   PRINT
+   ========================================================================== */
+/* Print sheets are built off-screen rather than display:none — they must be
+   laid out for fit.js to measure them, so they are positioned away instead. */
+#print-root{position:absolute;left:-100000px;top:0;width:1400px}
+
+@media print{
+  /* @page size/orientation is injected by app.js into #page-rule */
+  html,body{height:auto;background:#fff}
+  #app{display:none !important}
+  #print-root{position:static;left:auto;width:auto}
+  .sheet-wrap{margin:0;filter:none}
+  .sheet{transform:none !important;box-shadow:none;
+         break-after:page;page-break-after:always}
+  .sheet:last-child{break-after:auto;page-break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

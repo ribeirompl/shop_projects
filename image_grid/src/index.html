@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Grid</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">Image&nbsp;Grid</div>
+    <div class="topbar-spacer"></div>
+    <span id="status" class="status" role="status" aria-live="polite"></span>
+    <button id="btn-pdf" class="btn btn-primary">Generate&nbsp;PDF</button>
+  </header>
+
+  <main class="panes">
+
+    <!-- ============ LEFT: IMAGES + SETTINGS ============ -->
+    <section class="pane pane-left">
+
+      <div class="controls">
+        <div class="ctl">
+          <label class="ctl-label" for="sel-orient">Orientation</label>
+          <select id="sel-orient">
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
+
+        <div class="ctl">
+          <label class="ctl-label" for="sel-grid">Grid</label>
+          <select id="sel-grid"></select>
+        </div>
+
+        <div class="ctl">
+          <label class="ctl-label">Custom</label>
+          <div class="pair">
+            <input type="number" id="custom-cols" min="1" max="12" aria-label="Columns"> ×
+            <input type="number" id="custom-rows" min="1" max="12" aria-label="Rows">
+          </div>
+        </div>
+
+        <div class="ctl">
+          <label class="ctl-label" for="sel-align">Align</label>
+          <select id="sel-align">
+            <option value="center">Center</option>
+            <option value="top">Top</option>
+          </select>
+        </div>
+
+        <div class="ctl">
+          <label class="ctl-label" for="num-margin">Margin (mm)</label>
+          <input type="number" id="num-margin" min="0" max="40" step="1">
+        </div>
+      </div>
+
+      <div id="drop-zone" class="drop-zone" tabindex="0" role="button">
+        <strong>Click or drop images here</strong>
+        <span class="dz-sub">They stay on this machine — nothing is uploaded</span>
+        <input type="file" id="file-input" accept="image/*" multiple hidden>
+      </div>
+
+      <div class="thumbs-head">
+        <span id="thumbs-count" class="thumbs-count"></span>
+        <button id="btn-clear" class="btn btn-ghost btn-danger" type="button">Clear all</button>
+      </div>
+
+      <div id="thumbs" class="thumbs"></div>
+
+      <p class="tip">
+        Drag a thumbnail to reorder · <b>×</b> removes one ·
+        images are fitted whole into their cell, never cropped
+      </p>
+    </section>
+
+    <!-- ============ RIGHT: PREVIEW ============ -->
+    <section class="pane pane-right">
+      <div class="preview-bar">
+        <span id="preview-info" class="preview-info"></span>
+      </div>
+      <div id="preview" class="preview"></div>
+    </section>
+
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

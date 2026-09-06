@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Image Grid
+   --------------------------------------------------------------------------
+   Two blocks below:
+     1. APP CHROME  — the editor UI.
+     2. SHEET       — the preview pages, drawn at true mm and scaled down.
+
+   Nothing here is printed. jsPDF writes the document; the browser's print
+   pipeline is not involved, so there are no @page or @media print rules.
+   ========================================================================== */
+
+:root{
+  --ink:#171a1f; --muted:#6b7280; --rule:#e4e7eb; --bg:#f4f6f8; --card:#fff;
+  --accent:#1668c7; --danger:#c0392b;
+}
+
+/* ==========================================================================
+   1. APP CHROME
+   ========================================================================== */
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font:14px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+body.busy{cursor:progress}
+
+#app{display:flex;flex-direction:column;height:100vh}
+
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--card);
+        border-bottom:1px solid var(--rule);flex:0 0 auto}
+.brand{font-weight:700;font-size:15px;letter-spacing:.01em}
+.topbar-spacer{flex:1}
+.status{font-size:12px;color:var(--muted)}
+
+.btn{font:inherit;border-radius:6px;border:1px solid var(--rule);background:var(--card);
+     padding:7px 12px;cursor:pointer;color:inherit}
+.btn:hover{border-color:#c9d2da}
+.btn:disabled{opacity:.55;cursor:default}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn-primary:hover:not(:disabled){background:#1257a8;border-color:#1257a8}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn-ghost:hover{background:#eceff2;border-color:transparent;color:var(--ink)}
+.btn-danger:hover{color:var(--danger)}
+
+.panes{flex:1;display:grid;grid-template-columns:minmax(360px,42%) 1fr;min-height:0}
+.pane{min-height:0;overflow:auto}
+.pane-left{padding:14px 16px;border-right:1px solid var(--rule);background:var(--card);
+           display:flex;flex-direction:column;gap:12px}
+.pane-right{background:#e9edf1}
+
+/* ---- controls ---- */
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:5px}
+.ctl-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ctl select,.ctl input[type=number]{font:inherit;padding:6px 8px;border:1px solid var(--rule);
+     border-radius:6px;background:var(--card);color:inherit}
+.ctl input[type=number]{width:60px}
+.pair{display:flex;align-items:center;gap:6px;color:var(--muted)}
+
+/* ---- drop zone ---- */
+.drop-zone{border:2px dashed #ccd4dc;border-radius:8px;padding:22px;text-align:center;
+           cursor:pointer;display:flex;flex-direction:column;gap:4px;
+           transition:border-color .15s,background .15s}
+.drop-zone:hover,.drop-zone:focus-visible{border-color:var(--accent);background:#f2f7fd;outline:none}
+.drop-zone.over{border-color:var(--accent);background:#e8f2fd}
+.dz-sub{font-size:12px;color:var(--muted)}
+
+/* ---- thumbnails ---- */
+.thumbs-head{display:flex;align-items:center;gap:10px}
+.thumbs-count{font-size:12px;color:var(--muted);flex:1}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;
+        min-height:40px}
+.thumb{position:relative;aspect-ratio:1;border:1px solid var(--rule);border-radius:6px;
+       background:#fbfcfd;display:flex;align-items:center;justify-content:center;
+       overflow:hidden;cursor:grab}
+.thumb img{max-width:100%;max-height:100%;object-fit:contain;display:block;pointer-events:none}
+.thumb .ord{position:absolute;left:4px;top:4px;min-width:18px;height:18px;padding:0 4px;
+            border-radius:9px;background:rgba(23,26,31,.72);color:#fff;font-size:11px;
+            display:flex;align-items:center;justify-content:center}
+.thumb .rm{position:absolute;right:4px;top:4px;width:20px;height:20px;border:0;border-radius:50%;
+           background:rgba(23,26,31,.62);color:#fff;font-size:13px;line-height:1;cursor:pointer;
+           display:flex;align-items:center;justify-content:center;padding:0}
+.thumb .rm:hover{background:var(--danger)}
+.thumb-ghost{opacity:.35}
+
+.tip{margin:0;font-size:12px;color:var(--muted)}
+.tip b{color:#4b5563}
+
+/* ---- preview ---- */
+.preview-bar{position:sticky;top:0;z-index:5;background:#e9edf1;padding:9px 16px;
+             border-bottom:1px solid #d7dde3}
+.preview-info{font-size:12px;color:var(--muted)}
+.preview{padding:16px}
+.sheet-wrap{position:relative;margin:0 auto 16px;filter:drop-shadow(0 3px 10px rgba(16,24,40,.16))}
+
+/* ==========================================================================
+   2. SHEET
+   --------------------------------------------------------------------------
+   The page is a true-size box scaled by a transform. Everything inside is
+   positioned in mm by app.js from the numbers in layout.js — the same numbers
+   handed to jsPDF — so the preview cannot disagree with the document.
+   ========================================================================== */
+
+.sheet{position:relative;background:#fff;overflow:hidden;
+       transform:scale(var(--scale,1));transform-origin:top left}
+
+.sheet .guide,.sheet .placed{position:absolute}
+
+/* Cell outlines are a screen-only aid; they exist in no PDF. */
+.guide{outline:1px dashed #e2e6ea;outline-offset:-1px;pointer-events:none}
+
+/* width/height are set to the fitted rect, so the box already has the image's
+   aspect — object-fit only guards against a rounding hair. */
+.placed{object-fit:contain;display:block}

@@ -1,0 +1,8 @@
+* text=auto
+
+*.woff2 binary
+*.png   binary
+*.pdf   binary
+*.pub   binary
+*.doc   binary
+*.docx  binary

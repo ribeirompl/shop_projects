@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shelf Talkers</title>
+<!--INLINE:FONTS-->
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="brand">Shelf&nbsp;Talkers</div>
+    <div class="topbar-spacer"></div>
+    <div class="print-hint">
+      In the print dialog leave <b>Margins: Default</b> and <b>Scale: 100%</b>
+    </div>
+    <button id="btn-print" class="btn btn-primary">Print&nbsp;/&nbsp;Save&nbsp;PDF</button>
+  </header>
+
+  <main class="panes">
+
+    <!-- ============ LEFT: DATA ENTRY ============ -->
+    <section class="pane pane-left">
+
+      <div class="controls">
+        <div class="ctl">
+          <label class="ctl-label">Design</label>
+          <div class="seg" id="design-seg"></div>
+        </div>
+
+        <div class="ctl">
+          <label class="ctl-label">Layout</label>
+          <button id="layout-btn" class="layout-btn" type="button" aria-haspopup="dialog">
+            <span class="layout-btn-thumb" id="layout-btn-thumb"></span>
+            <span class="layout-btn-text" id="layout-btn-text">1 × 3</span>
+            <span class="caret">▾</span>
+          </button>
+        </div>
+
+        <div class="ctl ctl-tight">
+          <label class="ctl-label">&nbsp;</label>
+          <label class="check"><input type="checkbox" id="chk-blurb" checked> Small print</label>
+        </div>
+      </div>
+
+      <div class="table-head">
+        <span class="th th-grip"></span>
+        <span class="th">Name</span>
+        <span class="th">Price</span>
+        <span class="th">Detail</span>
+        <span class="th th-acts"></span>
+      </div>
+
+      <div id="rows" class="rows"></div>
+
+      <div class="table-foot">
+        <button id="btn-add" class="btn btn-ghost" type="button">+ Add item</button>
+        <button id="btn-example" class="btn btn-ghost" type="button">Load example items</button>
+        <button id="btn-clear" class="btn btn-ghost btn-danger" type="button">Clear all</button>
+        <span class="save-state" id="save-state"></span>
+      </div>
+
+      <p class="tip">
+        <b>Tab</b> moves across · <b>Enter</b> in Name adds a row ·
+        <b>Enter</b> in Price starts a second price line (each line is sized on its own) ·
+        drag <b>⠿</b> to reorder
+      </p>
+    </section>
+
+    <!-- ============ RIGHT: PREVIEW ============ -->
+    <section class="pane pane-right">
+      <div class="preview-bar">
+        <span id="preview-info" class="preview-info"></span>
+      </div>
+      <div id="preview" class="preview"></div>
+    </section>
+
+  </main>
+
+  <!-- ============ LAYOUT PICKER POPOVER ============ -->
+  <div id="layout-pop" class="pop" hidden>
+    <div class="pop-head">
+      <div class="seg seg-sm" id="orient-seg"></div>
+    </div>
+    <div class="pop-grid" id="layout-grid"></div>
+    <div class="pop-foot">
+      <label>Custom</label>
+      <input type="number" id="custom-cols" min="1" max="12" value="1"> ×
+      <input type="number" id="custom-rows" min="1" max="12" value="3">
+      <button class="btn btn-ghost" id="custom-apply" type="button">Apply</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- print target: sheets are moved here at print time so nothing else can leak onto the page -->
+<div id="print-root"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
