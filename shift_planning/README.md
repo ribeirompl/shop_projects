@@ -53,6 +53,14 @@ pattern the chosen week is and one button applies it; the casuals are then
 done by hand in the Grid. Patterns are edited in the same grid-and-editor. Week 1 starts on the
 anchor Monday set on the Setup page (1 Jan 2024 unless changed).
 
+Setting the patterns up the first time is easier the other way round: type
+a week into the Grid, then **⋯ → Fill Week N from the week of …** on that
+pattern. It takes the whole week for everyone in the frame exactly as it
+stands, blank days included — so someone with nothing that week gets an
+empty pattern, and applying it later clears their week. Use the ◀ ▶ arrows
+to land on the week you want to copy first; the same ⋯ clears a pattern,
+and undo covers both.
+
 ### Availability
 
 Click a day to cycle it: available → unavailable → every Tuesday (or

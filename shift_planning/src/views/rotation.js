@@ -11,13 +11,21 @@
    Applying overwrites the members' cells for the current week — text and
    colour — and leaves everyone else alone. Every destructive button asks
    first, and undo brings the week back.
+
+   The ⋯ on a pattern week runs the other direction: it fills that pattern
+   from the week on screen. A rotation that already exists on paper is
+   therefore typed into the Grid once, week by week, rather than into the
+   patterns — and any week can be the source, since the ◀ ▶ arrows work on
+   this tab. It is a once-in-a-while job, which is why it lives in a menu
+   next to the weekly button rather than beside it.
    ========================================================================== */
 
 import { h, clear, fill } from '../dom.js';
 import { weekLabel } from '../model.js';
+import { showMenu } from '../menu.js';
 import { parseShift, hoursLabel } from '../shifts.js';
 import { paidMinutes, weekLimit } from '../coverage.js';
-import { frameWeeks, frameWeekOf, frameMembers, getPattern, setPattern, applyFrame, clearFrameWeek } from '../frame.js';
+import { frameWeeks, frameWeekOf, frameMembers, getPattern, setPattern, applyFrame, saveWeekToFrame, clearFrameWeek } from '../frame.js';
 import { mountWeekTable } from '../weektable.js';
 
 export const css = `
@@ -52,6 +60,17 @@ export default {
       store.update(s => applyFrame(s, w, frameMembers(s)), { label: 'frame-apply' });
     }
 
+    /* The inverse of apply(): the week on screen becomes the pattern.
+       Blanks are copied too, so the pattern is exactly what is on screen —
+       which also means a member with an empty week gets an empty pattern,
+       and applying it later clears their week instead of skipping them.
+       The confirm says so. */
+    function fillFrom(w){
+      const state = store.state;
+      if (!confirm(`Fill the Week ${w + 1} pattern from ${weekLabel(state)}? It replaces that pattern for everyone in the frame, blank days included — anyone with nothing this week ends up with an empty pattern, which "Apply Week ${w + 1}" will then clear for them. Undo can bring it back.`)) return;
+      store.update(s => saveWeekToFrame(s, w, frameMembers(s)), { label: 'frame-fill' });
+    }
+
     function renderTop(state){
       const n = frameWeeks(state), now = frameWeekOf(state);
       const members = new Set(state.frame.members);
@@ -81,7 +100,15 @@ export default {
       box.append(h('div.row', {}, h('h2.rot-title', `Week ${w + 1}`), badge,
         h('span.spacer'),
         h('button.small.primary', { onclick: () => apply(w) }, 'Apply to this week'),
-        h('button.small', { onclick: () => confirm(`Clear the Week ${w + 1} pattern?`) && store.update(x => clearFrameWeek(x, w, frameMembers(x)), { label: 'frame' }) }, 'Clear')));
+        h('button.small', { title: `More for the Week ${w + 1} pattern`, onclick: e => {
+          const r = e.currentTarget.getBoundingClientRect();
+          showMenu(r.right - 300, r.bottom + 4, [
+            { label: `Fill Week ${w + 1} from the week of ${weekLabel(store.state)}`, onclick: () => fillFrom(w) },
+            'sep',
+            { label: `Clear the Week ${w + 1} pattern`, onclick: () =>
+                confirm(`Clear the Week ${w + 1} pattern?`) && store.update(x => clearFrameWeek(x, w, frameMembers(x)), { label: 'frame' }) }
+          ]);
+        } }, '⋯')));
       const table = mountWeekTable(box, {
         store, label: 'frame',
         rows: state => state.staff.filter(s => state.frame.members.includes(s.id)),
