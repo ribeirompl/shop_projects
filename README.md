@@ -14,3 +14,8 @@ you open in a browser — no internet, no install, works off a USB stick.
 - **[image_grid/](image_grid/)** — drop in a set of images, arrange them on an
   A4 grid, export a print-ready PDF. Contact sheets, label batches, anything you
   want several up on one page.
+
+- **[shift_planning/](shift_planning/)** — plan the week's cashier shifts in
+  whichever way suits (grid, day timeline, slots to fill, or a repeating
+  frame for the permanents), watch floor coverage as you go, print the
+  roster. Replaces the ShiftHoursEntry spreadsheet.

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shift Planner</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header id="topbar">
+  <div class="brand">Shift planner</div>
+  <div class="week">
+    <button id="week-prev" title="Previous week">◀</button>
+    <button id="week-label" class="quiet" title="Jump to this week"></button>
+    <button id="week-next-arrow" title="Following week">▶</button>
+    <button id="week-next" class="small" title="Jump to next week — the one usually being planned">Next week</button>
+  </div>
+  <nav id="tabs"></nav>
+  <div class="actions">
+    <span id="file-status" class="muted" title="Where the roster is saved"></span>
+    <button id="undo" title="Undo (Ctrl+Z)">↶</button>
+    <button id="redo" title="Redo (Ctrl+Y)">↷</button>
+    <button id="print-day" class="primary" title="Print the roster by day, for management">Print by day</button>
+    <button id="print-staff" class="primary" title="Print the roster by person, for the staff room">Print by staff</button>
+    <button id="more" title="File, import, export, reset">⋯</button>
+  </div>
+</header>
+
+<div id="banner" hidden></div>
+
+<main id="main">
+  <section id="view"></section>
+  <aside id="side"></aside>
+</main>
+
+<div id="menu" hidden></div>
+<div id="modal" hidden></div>
+<div id="print-root"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

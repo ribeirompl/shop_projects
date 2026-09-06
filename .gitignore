@@ -5,6 +5,14 @@
 # what staff actually open, and it has to be downloadable without a toolchain.
 
 # ---------------------------------------------------------------------------
+# Office originals — kept on disk as historical reference, never build inputs
+# ---------------------------------------------------------------------------
+*.pub
+*.docx
+*.xlsm
+*.xlsx
+
+# ---------------------------------------------------------------------------
 # Windows / Office cruft
 # ---------------------------------------------------------------------------
 desktop.ini

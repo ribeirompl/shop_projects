@@ -1,0 +1,14 @@
+{
+  "name": "shift-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plan the week's cashier shifts and print the roster",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "type": "module"
+}
