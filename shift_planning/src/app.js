@@ -19,11 +19,13 @@
 
    The roster lives in a file on disk (see filesync.js). On the first
    visit, before anything else, the page asks which file — opening the
-   saved one is the normal case; a blank one is for starting over.
+   one the shop already has is the normal case; the other choice saves
+   what is on screen into a new file. Nothing here ever empties a roster:
+   starting over is Setup and "Clear every shift", both undoable.
    ========================================================================== */
 
 import { h, clear, fill } from './dom.js';
-import { createStore, loadState, freshState, blankState, migrate, serialize, weekLabel, fromISO,
+import { createStore, loadState, freshState, migrate, serialize, weekLabel, fromISO,
          gotoWeek, previousWeek, nextWeek, copyWeekFrom, clearWeek, thisMonday, fmtDay } from './model.js';
 import { showMenu } from './menu.js';
 import { rosterPages } from './print.js';
@@ -121,14 +123,15 @@ async function openSavedFile(){
   catch (err) { if (err.name !== 'AbortError') alert('Could not open that file: ' + err.message); return false; }
 }
 
-async function createBlankFile(){
+/* Save-as: the roster on screen is written into a file the user picks,
+   and every later change follows it there. Any file linked before is left
+   on disk as it was. */
+async function saveToNewFile(){
   try {
-    const fh = await files.createFile();
-    store.replace(blankState(), { history: false, label: 'file' });
-    connect(fh);
-    saver.touch();
+    connect(await files.saveAsFile());
+    await saver.flush();
     return true;
-  } catch (err) { if (err.name !== 'AbortError') alert('Could not create the file: ' + err.message); return false; }
+  } catch (err) { if (err.name !== 'AbortError') alert('Could not save to that file: ' + err.message); return false; }
 }
 
 async function unlinkFile(){
@@ -148,12 +151,10 @@ async function reconnect(){
 function askForFile(){
   fill(modal, h('div.box', {},
     h('h2', 'Where is the roster?'),
-    h('p', 'The roster is kept in a file on disk, so it survives this browser and can sit in a folder that is backed up. Open the saved one, or start a blank one.'),
+    h('p', 'The roster is kept in a file on disk, so it survives this browser and can sit in a folder that is backed up. Open the file the shop already has, or save the roster shown behind this box into a new one.'),
     h('div.choices', {},
       h('button.primary', { onclick: async () => { if (await openSavedFile()) modal.hidden = true; } }, 'Open the saved roster file…'),
-      h('button.quiet', { onclick: async () => {
-        if (confirm('Start a blank roster in a new file? The sample roster shown behind this box is discarded.') && await createBlankFile()) modal.hidden = true;
-      } }, 'Create a blank roster file…'),
+      h('button.quiet', { onclick: async () => { if (await saveToNewFile()) modal.hidden = true; } }, 'Save this roster to a new file…'),
       h('button.quiet', { onclick: () => { modal.hidden = true; } }, 'Not now — keep it in this browser only'))));
   modal.hidden = false;
 }
@@ -202,7 +203,7 @@ $('more').addEventListener('click', e => {
     'sep',
     ...(files.supported ? [
       { label: 'Open a saved roster file…', onclick: openSavedFile },
-      { label: 'Create a blank roster file…', onclick: () => confirm('Start a blank roster in a new file? The current roster stays in its own file if it has one.') && createBlankFile() },
+      { label: 'Save this roster to a new file…', onclick: saveToNewFile },
       ...(handle ? [{ label: 'Unlink the roster file (' + handle.name + ')', onclick: unlinkFile }] : [])
     ] : [{ label: 'Autosave to a file needs Chrome or Edge' }]),
     'sep',

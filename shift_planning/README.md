@@ -10,9 +10,15 @@ program — one file, no internet needed, works off a USB stick.
 
 The first time, it asks where the roster is: **open the saved roster file**
 (the normal case — the file the shop already uses, ideally in a folder that
-Google Drive or OneDrive backs up) or **create a blank one**. From then on
-every change is written to that file. On later visits the browser wants one
-click before it may touch the file again; that is the yellow bar.
+Google Drive or OneDrive backs up) or **save this roster to a new file**,
+which writes what is on screen wherever you choose. From then on every
+change is written to that file. On later visits the browser wants one click
+before it may touch the file again; that is the yellow bar.
+
+**Save this roster to a new file…** is in the ⋯ menu too: it is how a
+roster kept in the browser only gets onto disk, and how you take a copy
+somewhere else and carry on in it. It never empties anything — to start
+from nothing, clear the weeks and edit the staff list in Setup.
 
 Shifts are written the way the old sheet wrote them: `7-4` is 07:00–16:00,
 `12-8` is 12:00–20:00, `2-8` is 14:00–20:00, `8-12, 5-8` is a split shift,

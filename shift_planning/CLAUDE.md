@@ -79,6 +79,12 @@ editor, paint mode); the views are thin.
   wins over local storage (`loadFromFile({always:true})`). Autosave is debounced (600 ms) and
   never writes while a write is in flight. The file wins over local storage
   only when its `savedAt` is newer.
+- **Linking a file never changes the roster in it.** The two choices are
+  open (the file's roster replaces what is on screen) and save-as (what is
+  on screen is written into a new file, `saver.flush()` so it lands before
+  the user looks). There is deliberately no "new blank file" — it read as
+  the safe choice and was the only destructive one. `blankState()` stays as
+  the base for `freshState()` and the tests.
 - **There is no migration, on purpose.** `migrate()` only checks a saved
   roster looks like one. While the shape is still moving, bump `STORE_KEY`
   when it changes so stale browser state is ignored, and re-create the

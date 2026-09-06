@@ -39,7 +39,9 @@ export const storedHandle = () => supported ? idb('readonly', s => s.get(KEY)).c
 const remember = handle => idb('readwrite', s => s.put(handle, KEY));
 export const forget = () => supported ? idb('readwrite', s => s.delete(KEY)).catch(() => {}) : Promise.resolve();
 
-export async function createFile(){
+/* Pick a new file to keep the roster in. The caller writes the roster it
+   already has into it — nothing is emptied here. */
+export async function saveAsFile(){
   const handle = await window.showSaveFilePicker({ suggestedName: 'shift-roster.json', types: TYPES });
   await remember(handle);
   return handle;
