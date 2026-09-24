@@ -32,6 +32,39 @@ export const SHEET_MARGIN_MM = { normal: 4, wide: 10 };
 
 export const sheetMarginMM = wide => wide ? SHEET_MARGIN_MM.wide : SHEET_MARGIN_MM.normal;
 
+/* The border is split between two mechanisms, and the split is the whole
+   point of this block.
+
+   Some of it is declared to `@page`. That matters because Chrome obeys
+   `margin:0` literally and lays ink into the strip no printer can reach; the
+   driver then clips the sheet or shunts it across to fit, so an even border
+   on screen comes out heavy on two sides on paper. A real page margin keeps
+   the printer's dead zone inside the border we asked for.
+
+   But Chrome also fills a roomy page margin with its own furniture — date,
+   title, file path, page number. Measured against this page: printed at
+   10mm, clean at 8mm and every value below. Staff print straight from the
+   toolbar and never open "More settings", so the dialog's "Headers and
+   footers" box cannot be what stands between them and a filename across the
+   top of every sign. Hence the cap, set well clear of where it starts.
+
+   Whatever the cap leaves over is inset inside the sheet instead, exactly as
+   the screen draws it. Grid width works out the same either way
+   (paper − 2·page − 2·inset = paper − 2·margin), so a cell is the same size
+   in the preview and on paper, which is what lets fit.js measure one and
+   trust the other. */
+export const PAGE_MARGIN_MAX_MM = 6;
+
+export const pageMarginMM  = wide => Math.min(sheetMarginMM(wide), PAGE_MARGIN_MAX_MM);
+export const insetMarginMM = wide => sheetMarginMM(wide) - pageMarginMM(wide);
+
+/* The paper minus the @page margin — the box print lays the sheet into. */
+export function sheetAreaMM(state, wide){
+  const [w, h] = pageMM(state);
+  const m = pageMarginMM(wide);
+  return [w - 2 * m, h - 2 * m];
+}
+
 export function pageMM(state){
   const [w, h] = PAPER[state.paper] || PAPER.A4;
   return state.orientation === 'landscape' ? [h, w] : [w, h];

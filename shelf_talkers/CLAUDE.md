@@ -48,6 +48,20 @@ tested: `layout.js` (pagination), the `layout()` half of each design
   fit-tasks. Single lines are solved exactly by one linear probe; wrapping text
   is binary-searched because line breaks move as the size changes. Sizes always
   round *down*, so a rounding error can never overflow the box.
+- **The blank border is split between an `@page` margin and an inset, and
+  both halves are load-bearing.** Some of it has to be a real `@page` margin:
+  Chrome obeys `margin:0` literally and lays ink into the strip no printer can
+  reach, and the driver then clips the sheet or shunts it sideways to fit. But
+  the margin cannot be *roomy* either, or Chrome fills it with its own date,
+  title, file path and page number — measured on this page, printed at 10mm
+  and clean at 8mm and below. Staff print from the toolbar and never open
+  "More settings", so the dialog's "Headers and footers" box cannot be what
+  keeps a filename off every sign. Hence `PAGE_MARGIN_MAX_MM` in `layout.js`,
+  with the remainder inset inside the sheet. On screen the whole border is the
+  inset and `.sheet` is the paper; in print `.sheet` is the `@page` box and
+  `--print-inset` holds the rest. Grid width comes out the same either way,
+  which is what lets `fit.js` measure on screen and still fit on paper — the
+  tests in `test/layout.test.mjs` pin exactly that.
 - **Print builds into `#print-root` unscaled.** The `beforeprint` listener
   exists so Ctrl+P and File→Print work, not just the toolbar button — without it
   those paths print a blank page.

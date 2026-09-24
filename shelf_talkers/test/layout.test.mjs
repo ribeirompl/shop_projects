@@ -10,7 +10,8 @@ import assert from 'node:assert/strict';
 
 import {
   PAPER, LAYOUT_PRESETS, MAX_GRID,
-  SHEET_MARGIN_MM, pageMM, perPage, pageCount, sheetCells, sheetMarginMM, previewSummary, thumbSVG
+  SHEET_MARGIN_MM, PAGE_MARGIN_MAX_MM, insetMarginMM, pageMarginMM,
+  pageMM, perPage, pageCount, sheetAreaMM, sheetCells, sheetMarginMM, previewSummary, thumbSVG
 } from '../src/layout.js';
 
 const base = { paper:'A4', orientation:'portrait', cols:1, rows:3 };
@@ -114,4 +115,47 @@ test('the wide-margin switch picks the wider border, and the default stays minim
   assert.equal(sheetMarginMM(true),  SHEET_MARGIN_MM.wide);
   assert.ok(SHEET_MARGIN_MM.wide > SHEET_MARGIN_MM.normal);
   assert.ok(SHEET_MARGIN_MM.wide * 2 < 210 / 2, 'leaves most of the page for artwork');
+});
+
+test('the printed area is the paper less the @page margin', () => {
+  for (const wide of [false, true]){
+    const m = pageMarginMM(wide);
+    for (const o of ['portrait','landscape']){
+      const st = { ...base, orientation:o };
+      const [pw, ph] = pageMM(st);
+      assert.deepEqual(sheetAreaMM(st, wide), [pw - 2 * m, ph - 2 * m], `${o}, wide=${wide}`);
+    }
+  }
+});
+
+test('the border splits into an @page margin plus an inset, and still adds up', () => {
+  for (const wide of [false, true]){
+    assert.equal(pageMarginMM(wide) + insetMarginMM(wide), sheetMarginMM(wide), `wide=${wide}`);
+    assert.ok(insetMarginMM(wide) >= 0, 'the inset is never negative');
+  }
+  assert.equal(insetMarginMM(false), 0, 'the normal border fits in the page margin whole');
+  assert.ok(insetMarginMM(true) > 0, 'the wide one is capped and spills into the inset');
+});
+
+/* Chrome fills a roomy @page margin with the date, title, file path and page
+   number. Measured against this page it starts at 10mm and is clean at 8mm
+   and below, so the cap has to stay clear of that — staff print from the
+   toolbar and never see the dialog's "Headers and footers" box. */
+test('the @page margin never reaches the size where Chrome prints its own furniture', () => {
+  const HEADERS_APPEAR_AT = 10;
+  assert.ok(PAGE_MARGIN_MAX_MM <= 8, `${PAGE_MARGIN_MAX_MM}mm is past the measured-clean 8mm`);
+  for (const wide of [false, true])
+    assert.ok(pageMarginMM(wide) < HEADERS_APPEAR_AT, `wide=${wide}`);
+});
+
+/* The screen insets the whole border inside a full sheet; print splits it.
+   That only holds together if a cell comes out the same size either way. */
+test('a cell is the same size on screen and on paper', () => {
+  for (const wide of [false, true]){
+    const st = { ...base, cols:2, rows:4 };
+    const [pw] = pageMM(st);
+    const screen = (pw - 2 * sheetMarginMM(wide)) / st.cols;
+    const paper  = (sheetAreaMM(st, wide)[0] - 2 * insetMarginMM(wide)) / st.cols;
+    assert.ok(Math.abs(screen - paper) < 1e-9, `wide=${wide}: ${screen} vs ${paper}`);
+  }
 });

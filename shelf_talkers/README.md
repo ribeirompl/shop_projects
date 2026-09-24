@@ -18,6 +18,8 @@ file, no internet needed, works off a USB stick.
   "CLOSING DOWN SALE").
 - **Wide margins** puts a 10 mm blank border round the page instead of 4 mm,
   for printers that clip the edge. It is off every time the file is opened.
+  Part of that border is printed as a real page margin, so the printer
+  cannot shunt the artwork sideways to squeeze it into its printable area.
 - Text is sized automatically to fit its box, so long names and short names
   both look deliberate.
 
@@ -26,7 +28,8 @@ cell (in Price each line is sized on its own, so "BOTH FOR" prints small
 above a huge "R32"; in Name and Detail it picks where the text breaks),
 **Ctrl+Enter** adds a row, and **⠿** drags to reorder.
 
-In the print dialog leave **Margins: Default** and **Scale: 100%**. Your items
+In the print dialog leave **Margins: Default** and set **Scale: 100%** —
+*Fit to printable area* shifts the artwork off-centre. Your items
 are saved in the browser, so closing the tab does not lose them.
 
 ## Changing it

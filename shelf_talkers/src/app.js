@@ -12,7 +12,8 @@
 
 import {
   MM, LAYOUT_PRESETS, MAX_GRID,
-  pageMM, previewSummary, sheetCells, sheetMarginMM, thumbSVG
+  insetMarginMM, pageMarginMM, pageMM, previewSummary,
+  sheetAreaMM, sheetCells, sheetMarginMM, thumbSVG
 } from './layout.js';
 
 import { isBlank } from './text.js';
@@ -210,8 +211,18 @@ const liveItems = () => state.items.filter(i => !isBlank(i));
 function newSheet(host, pwMM, phMM, scale){
   const wrap  = el2('div', 'sheet-wrap', host);
   const sheet = el2('div', 'sheet', wrap);
-  sheet.style.width  = pwMM + 'mm';
-  sheet.style.height = phMM + 'mm';
+  const [awMM, ahMM] = sheetAreaMM(state, wideMargin);
+
+  /* Screen shows the whole sheet of paper with the border drawn inside it.
+     Print lays the sheet into the @page margin box and insets only what the
+     cap left over. Both come from the same mm figures and the grid — hence
+     every cell — measures the same in either, so a fit done on screen still
+     fits on paper. */
+  sheet.style.setProperty('--paper-w', pwMM + 'mm');
+  sheet.style.setProperty('--paper-h', phMM + 'mm');
+  sheet.style.setProperty('--area-w',  awMM + 'mm');
+  sheet.style.setProperty('--area-h',  ahMM + 'mm');
+  sheet.style.setProperty('--print-inset', insetMarginMM(wideMargin) + 'mm');
   sheet.style.setProperty('--scale', scale);
   sheet.style.setProperty('--sheet-margin', sheetMarginMM(wideMargin) + 'mm');
 
@@ -343,8 +354,10 @@ function setPageRule(){
     st.id = 'page-rule';
     document.head.appendChild(st);
   }
+  /* Only the capped part of the border goes to @page — the rest is inset in
+     the sheet. See the margin block in layout.js for why it is split. */
   const [w, h] = pageMM(state);
-  st.textContent = `@page{size:${w}mm ${h}mm;margin:0}`;
+  st.textContent = `@page{size:${w}mm ${h}mm;margin:${pageMarginMM(wideMargin)}mm}`;
 }
 
 /* Sheets are built unscaled into the off-screen #print-root. This must also

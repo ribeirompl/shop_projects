@@ -177,7 +177,13 @@ body{margin:0;background:var(--bg);color:var(--ink);
    2. SHEET  (printed artwork)
    ========================================================================== */
 
+/* On screen the sheet is the whole piece of paper, with the blank border
+   drawn inside it, so the preview shows what comes out of the printer.
+   In print the sheet is just the grid: @page carries the border instead
+   (see the print block). Both come from the same mm figures in layout.js
+   and the cell works out the same size either way. */
 .sheet{position:relative;background:#fff;overflow:hidden;
+       width:var(--paper-w);height:var(--paper-h);
        transform:scale(var(--scale,1));transform-origin:top left}
 
 .grid{position:absolute;inset:var(--sheet-margin);display:grid}
@@ -281,13 +287,19 @@ body{margin:0;background:var(--bg);color:var(--ink);
 #print-root{position:absolute;left:-100000px;top:0;width:1400px}
 
 @media print{
-  /* @page size/orientation is injected by app.js into #page-rule */
+  /* @page size/orientation/margin is injected by app.js into #page-rule.
+     The border is split: @page holds as much of it as Chrome will take
+     without filling the margin with its own date/title/filename furniture,
+     and --print-inset holds the remainder. Both numbers come from the
+     margin block in layout.js, which is where the reasoning lives. */
   html,body{height:auto;background:#fff}
   #app{display:none !important}
   #print-root{position:static;left:auto;width:auto}
   .sheet-wrap{margin:0;filter:none}
-  .sheet{transform:none !important;box-shadow:none;
+  .sheet{width:var(--area-w);height:var(--area-h);
+         transform:none !important;box-shadow:none;
          break-after:page;page-break-after:always}
+  .grid{inset:var(--print-inset)}
   .sheet:last-child{break-after:auto;page-break-after:auto}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
