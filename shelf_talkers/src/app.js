@@ -12,7 +12,7 @@
 
 import {
   MM, LAYOUT_PRESETS, MAX_GRID,
-  pageMM, previewSummary, sheetCells, thumbSVG
+  pageMM, previewSummary, sheetCells, sheetMarginMM, thumbSVG
 } from './layout.js';
 
 import { isBlank } from './text.js';
@@ -39,6 +39,11 @@ let state = {
   rows: 3,
   showBlurb: true
 };
+
+/* Deliberately outside `state`, so it is never saved: wide margins are a
+   fix for one awkward printer or one job, and a sheet that silently opens
+   with them next week would just look like the grid shrank. */
+let wideMargin = false;
 
 let nextId = 1;
 const newItem = (o = {}) => ({ id: nextId++, name:'', price:'', detail:'', ...o });
@@ -115,21 +120,21 @@ function renderTable(){
     price.placeholder = 'R9.99';
     price.title = 'Enter starts a new line — each line is sized on its own';
 
-    const detail = el2('input', '', row);
-    detail.value = item.detail; detail.placeholder = 'PER KG';
+    const detail = el2('textarea', '', row);
+    detail.value = item.detail; detail.rows = 1; detail.placeholder = 'PER KG';
 
     const acts = el2('div', 'row-acts', row);
     const dup = el2('button', 'icon-btn', acts); dup.textContent = '⧉'; dup.title = 'Duplicate';
     const del = el2('button', 'icon-btn del', acts); del.textContent = '✕'; del.title = 'Delete';
 
-    name.oninput   = () => { item.name   = name.value;   autoGrow(name);  touch(); };
-    detail.oninput = () => { item.detail = detail.value; touch(); };
-    price.oninput  = () => { item.price  = price.value;  autoGrow(price); touch(); };
+    name.oninput   = () => { item.name   = name.value;   autoGrow(name);   touch(); };
+    detail.oninput = () => { item.detail = detail.value; autoGrow(detail); touch(); };
+    price.oninput  = () => { item.price  = price.value;  autoGrow(price);  touch(); };
 
-    /* Enter adds a row rather than a newline — a name is always one line, and
-       the price splits on Enter through its own handler in text.js. */
-    name.onkeydown = e => {
-      if (e.key === 'Enter'){ e.preventDefault(); addItemAfter(idx); }
+    /* Enter is a line break in every cell, so where a name or detail breaks
+       can be chosen by hand; Ctrl+Enter from any cell adds the next row. */
+    row.onkeydown = e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); addItemAfter(idx); }
     };
 
     dup.onclick = () => {
@@ -144,7 +149,7 @@ function renderTable(){
 
     wireDrag(row, grip, idx);
     host.appendChild(row);
-    autoGrow(name); autoGrow(price);   // in the document by now, so measurable
+    autoGrow(name); autoGrow(price); autoGrow(detail);   // in the document by now, so measurable
   });
 }
 
@@ -208,6 +213,7 @@ function newSheet(host, pwMM, phMM, scale){
   sheet.style.width  = pwMM + 'mm';
   sheet.style.height = phMM + 'mm';
   sheet.style.setProperty('--scale', scale);
+  sheet.style.setProperty('--sheet-margin', sheetMarginMM(wideMargin) + 'mm');
 
   if (scale !== 1){
     wrap.style.width  = (pwMM * MM * scale) + 'px';
@@ -389,6 +395,8 @@ function init(){
   };
   $('#chk-blurb').checked = state.showBlurb;
   $('#chk-blurb').onchange = e => { state.showBlurb = e.target.checked; refresh(); };
+  $('#chk-margin').checked = wideMargin;   // browsers restore checkbox state on reload
+  $('#chk-margin').onchange = e => { wideMargin = e.target.checked; refresh(); };
 
   $('#layout-btn').onclick = () => ($('#layout-pop').hidden ? openPop() : closePop());
   $('#custom-apply').onclick = () => {

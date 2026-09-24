@@ -53,3 +53,5 @@ tested: `layout.js` (pagination), the `layout()` half of each design
   those paths print a blank page.
 - State persists to `localStorage` under `shelf-talkers.v1`. Bump the key if the
   shape of `state` changes incompatibly.
+  The wide-margin switch lives outside `state` on purpose so it is never
+  saved: it should be off every time the file is opened.

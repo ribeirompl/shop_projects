@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import {
   PAPER, LAYOUT_PRESETS, MAX_GRID,
-  pageMM, perPage, pageCount, sheetCells, previewSummary, thumbSVG
+  SHEET_MARGIN_MM, pageMM, perPage, pageCount, sheetCells, sheetMarginMM, previewSummary, thumbSVG
 } from '../src/layout.js';
 
 const base = { paper:'A4', orientation:'portrait', cols:1, rows:3 };
@@ -107,4 +107,11 @@ test('every preset is a sane grid the custom box would also accept', () => {
   }
   const seen = new Set(LAYOUT_PRESETS.map(p => p.join('x')));
   assert.equal(seen.size, LAYOUT_PRESETS.length, 'no duplicate presets');
+});
+
+test('the wide-margin switch picks the wider border, and the default stays minimal', () => {
+  assert.equal(sheetMarginMM(false), SHEET_MARGIN_MM.normal);
+  assert.equal(sheetMarginMM(true),  SHEET_MARGIN_MM.wide);
+  assert.ok(SHEET_MARGIN_MM.wide > SHEET_MARGIN_MM.normal);
+  assert.ok(SHEET_MARGIN_MM.wide * 2 < 210 / 2, 'leaves most of the page for artwork');
 });

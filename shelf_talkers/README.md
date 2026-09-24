@@ -12,12 +12,19 @@ file, no internet needed, works off a USB stick.
 - Choose a **layout**: 1×3, 2×4 and so on, portrait or landscape, or type a
   custom grid. Items flow onto as many pages as needed.
 - **Small print** toggles the "PRICES INCLUDE VAT / T's & C's apply" block.
+  With it off, the rest of the sign grows into the space it leaves.
+- Leave **Detail** empty and the price spreads into its room; leave Price
+  empty too and the name takes the whole card (for a notice like
+  "CLOSING DOWN SALE").
+- **Wide margins** puts a 10 mm blank border round the page instead of 4 mm,
+  for printers that clip the edge. It is off every time the file is opened.
 - Text is sized automatically to fit its box, so long names and short names
   both look deliberate.
 
-Entry shortcuts: **Tab** moves across, **Enter** in Name adds a row, **Enter**
-in Price starts a second price line (each line is sized on its own, so
-"BOTH FOR" prints small above a huge "R32"), and **⠿** drags to reorder.
+Entry shortcuts: **Tab** moves across, **Enter** starts a new line in any
+cell (in Price each line is sized on its own, so "BOTH FOR" prints small
+above a huge "R32"; in Name and Detail it picks where the text breaks),
+**Ctrl+Enter** adds a row, and **⠿** drags to reorder.
 
 In the print dialog leave **Margins: Default** and **Scale: 100%**. Your items
 are saved in the browser, so closing the tab does not lose them.

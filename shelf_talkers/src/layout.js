@@ -25,6 +25,13 @@ export const LAYOUT_PRESETS = [
 
 export const MAX_GRID = 12;                  // guard on the custom cols/rows box
 
+/* Blank border around the whole grid. The normal one is minimal, inside
+   every office printer's dead zone; the wide one is for printers that clip
+   more than that, or for sheets that get trimmed by hand. */
+export const SHEET_MARGIN_MM = { normal: 4, wide: 10 };
+
+export const sheetMarginMM = wide => wide ? SHEET_MARGIN_MM.wide : SHEET_MARGIN_MM.normal;
+
 export function pageMM(state){
   const [w, h] = PAPER[state.paper] || PAPER.A4;
   return state.orientation === 'landscape' ? [h, w] : [w, h];

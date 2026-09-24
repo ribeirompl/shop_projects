@@ -13,8 +13,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  DESIGNS, DESIGN_BY_ID, ASPECT_SPLIT, BLURB_LINES,
-  bestbuyLayout, brilliantLayout, woolLayout
+  DESIGNS, DESIGN_BY_ID, ASPECT_SPLIT, BLURB_LINES, PRICE_GAP,
+  bestbuyLayout, brilliantLayout, woolLayout, reflowEmpty
 } from '../src/designs.js';
 
 /* A cell of the given size, as app.js builds it. */
@@ -113,11 +113,24 @@ test('the price never runs into the detail, in any design or cell shape', () => 
   }
 });
 
-test('BEST BUY tall keeps the headline and small print inside the green banner', () => {
-  const L = bestbuyLayout(ctx(210, 297));
-  assert.equal(L.wide, false);
-  assert.ok(L.headline.y + L.headline.h <= L.panel.h, 'headline sits in the banner');
-  assert.ok(L.blurb.y + L.blurb.h <= L.panel.h, 'small print sits in the banner');
+/* Not overlapping was not enough: at 2×1 landscape BRILLIANT BUYS had the
+   two boxes touching, and both fill their box, so it printed "R9.99R10 75G". */
+test('the price keeps clear air before the detail, in any design or cell shape', () => {
+  for (const [design, layout] of Object.entries(LAYOUTS)){
+    for (const [shape, c] of Object.entries(CELLS)){
+      const L = layout(c);
+      const gap = L.detail.x - (L.price.x + L.price.w);
+      assert.ok(gap >= PRICE_GAP - 1e-9, `${design} @ ${shape}: gap ${gap.toFixed(3)}`);
+    }
+  }
+});
+
+test('BEST BUY keeps its small print out of the green, as a footer under the price', () => {
+  for (const [shape, c] of Object.entries(CELLS)){
+    const L = bestbuyLayout(c);
+    assert.ok(!overlaps(L.blurb, L.panel), `${shape}: small print is on the white`);
+    assert.ok(L.blurb.y >= L.price.y + L.price.h - 1e-9, `${shape}: and below the price`);
+  }
 });
 
 test('BRILLIANT BUYS runs its small print up the left edge, clear of the bar', () => {
@@ -169,3 +182,66 @@ test('the small print is real copy, not a leftover placeholder', () => {
   assert.ok(BLURB_LINES.length >= 3);
   assert.ok(BLURB_LINES[0].includes('VAT'));
 });
+
+/* ---- small print off ------------------------------------------------------ */
+
+for (const [design, layout] of Object.entries(LAYOUTS)){
+  test(`${design}: with small print off, slots still stay inside and off each other`, () => {
+    for (const [shape, c] of Object.entries(CELLS)){
+      const L = layout({ ...c, showBlurb: false });
+      const slots = slotsOf(L);
+      for (const { key, r } of slots){
+        assert.ok(r.x >= -1e-9 && r.y >= -1e-9 && r.x + r.w <= 1 + 1e-9 && r.y + r.h <= 1 + 1e-9,
+          `${shape}: ${key} inside`);
+      }
+      for (let i = 0; i < slots.length; i++)
+        for (let j = i + 1; j < slots.length; j++)
+          assert.ok(!overlaps(slots[i].r, slots[j].r), `${shape}: ${slots[i].key} overlaps ${slots[j].key}`);
+      assert.ok(L.detail.x - (L.price.x + L.price.w) >= PRICE_GAP - 1e-9, `${shape}: price gap`);
+    }
+  });
+}
+
+test('BEST BUY headline has the whole panel to itself, small print or not', () => {
+  for (const c of Object.values(CELLS)){
+    const on  = bestbuyLayout({ ...c, showBlurb: true  });
+    const off = bestbuyLayout({ ...c, showBlurb: false });
+    assert.deepEqual(on.headline, off.headline);
+    assert.ok(on.headline.w >= on.panel.w * 0.9, 'spans the panel');
+  }
+});
+
+/* ---- empty fields hand their room on ------------------------------------- */
+
+const FULL = { name:'BANANAS', price:'R9.99', detail:'PER KG' };
+
+for (const [design, layout] of Object.entries(LAYOUTS)){
+  test(`${design}: no detail — the price runs on across the detail's box`, () => {
+    for (const [shape, c] of Object.entries(CELLS)){
+      const L = layout(c);
+      const R = reflowEmpty(L, { ...FULL, detail:'  ' });
+      assert.equal(R.detail, null, shape);
+      assert.ok(Math.abs(R.price.x + R.price.w - (L.detail.x + L.detail.w)) < 1e-9, `${shape}: reaches the detail's edge`);
+      for (const { key, r } of slotsOf(R)){
+        if (key !== 'price') assert.ok(!overlaps(R.price, r), `${shape}: price overlaps ${key}`);
+      }
+    }
+  });
+
+  test(`${design}: no price or detail — the name takes the whole body`, () => {
+    for (const [shape, c] of Object.entries(CELLS)){
+      const L = layout(c);
+      const R = reflowEmpty(L, { name:'BANANAS', price:'', detail:'' });
+      assert.equal(R.price, null); assert.equal(R.detail, null);
+      assert.ok(R.name.h > L.name.h, `${shape}: name grew`);
+      for (const { key, r } of slotsOf(R)){
+        if (key !== 'name') assert.ok(!overlaps(R.name, r), `${shape}: name overlaps ${key}`);
+      }
+    }
+  });
+
+  test(`${design}: a full item is left exactly as laid out`, () => {
+    const L = layout(CELLS['2×4 portrait']);
+    assert.deepEqual(reflowEmpty(L, FULL), L);
+  });
+}

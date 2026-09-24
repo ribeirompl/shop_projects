@@ -24,8 +24,10 @@
 
   /* ---- design colours ---------------------------------------------------
      BEST BUY and BRILLIANT BUYS both run the house palette. Sampled straight
-     out of the OK Foods artwork: the panel green, the logo red, white.     */
-  --ok-green:  #074531;
+     out of the OK Foods artwork: the panel green, the logo red, white.
+     The green is lifted from the artwork's #074531: that printed near-black
+     on the shop's printers, and the red headline was lost against it.     */
+  --ok-green:  #1a7a50;
   --ok-red:    #EB1D24;
   --ok-white:  #ffffff;
 
@@ -49,7 +51,7 @@
   --wool-pink:  #F09BE0;
 
   /* ---- sheet ------------------------------------------------------------ */
-  --sheet-margin: 4mm;      /* minimal, inside every office printer's dead zone */
+  /* --sheet-margin is set per sheet by app.js from SHEET_MARGIN_MM in layout.js */
   --hairline: 0.2mm;
   --hairline-ink: #c2c2c2;
 
@@ -243,10 +245,15 @@ body{margin:0;background:var(--bg);color:var(--ink);
   paint-order:stroke fill}
 
 /* ---- BEST BUY ---- */
-.d-bestbuy .blurb{font-family:var(--f-narrow);font-weight:700;color:#fff;line-height:1.28}
+/* Footer on the white, so black; balance evens out the lines it wraps to. */
+.d-bestbuy .blurb{font-family:var(--f-narrow);font-weight:700;color:#000;line-height:1.25;
+  text-wrap:balance}
+.slot .phrase{white-space:nowrap}
 .d-bestbuy .name,.d-bestbuy .price,.d-bestbuy .detail{
   font-family:var(--f-item);font-weight:700;font-style:italic;color:#000}
-.d-bestbuy .name{line-height:1.1}
+/* Wrapped names read as one block only when set tight; the font's normal
+   line-height leaves a stray-looking gap under the first line. */
+.d-bestbuy .name,.d-brilliant .name,.d-wool .name{line-height:1.1}
 .d-bestbuy .price{line-height:1.02}
 
 /* ---- BRILLIANT BUYS ---- */

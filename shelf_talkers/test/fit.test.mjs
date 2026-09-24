@@ -86,8 +86,16 @@ test('a short price line prints bigger than a long one — the whole point of th
 
 test('a long lead-in never collapses to nothing beside a short line', () => {
   // A hugely wide first line would otherwise size to almost zero.
-  const [lead, big] = stackSizes({ w:200, h:100000 }, [100000, 100], 1);
-  near(lead, Math.floor(big * MIN_RATIO * 100) / 100, 'floored at MIN_RATIO of the biggest');
+  const [lead, big] = stackSizes({ w:200, h:100000 }, [100000, 100], 0);
+  assert.ok(lead >= big * MIN_RATIO - 0.01, `held at MIN_RATIO of the biggest (${lead} vs ${big})`);
+});
+
+test('holding that ratio never pushes a line wider than its box', () => {
+  // At 3×2, "BOTH FOR" was raised past the edge beside a huge "R32" and clipped.
+  const box = { w:200, h:100000 };
+  const nat = [900, 100];
+  stackSizes(box, nat, 0).forEach((px, i) =>
+    assert.ok(nat[i] * px / REF <= box.w + 1e-9, `line ${i} fits (${nat[i] * px / REF})`));
 });
 
 test('the stack is scaled down to fit the height of its box', () => {

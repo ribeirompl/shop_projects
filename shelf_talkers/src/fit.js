@@ -92,8 +92,11 @@ export function stackSizes(box, natWidths, min){
 
   let size = natWidths.map(w => REF * box.w / (w || 1));
 
-  const biggest = Math.max(...size);
-  size = size.map(v => Math.max(v, biggest * MIN_RATIO));
+  /* Hold the ratio by capping the big line, never by raising the small one:
+     each size above is already the widest its line can go, so raising a
+     long lead-in pushed it off the edge — "BOTH FOR" printed clipped. */
+  const smallest = Math.min(...size);
+  size = size.map(v => Math.min(v, smallest / MIN_RATIO));
 
   const needed = size.reduce((sum, v) => sum + v * LINE_H, 0);
   if (needed > box.h){
@@ -184,6 +187,19 @@ const overflows = (txt, box) =>
 
 const apply = (txt, px) => { txt.style.fontSize = px + 'px'; };
 
+/* The text's own extent at the current size. Every text box is width:100%
+   of its slot, and scrollWidth never reports less than the box — so a line
+   shorter than its slot at REF measured as the slot, and the linear probe
+   capped it near REF: BEST BUY stopped short of a 1-up banner, and "R32"
+   came out no bigger than "BOTH FOR". Measured at max-content instead. */
+function natural(el){
+  const prev = el.style.width;
+  el.style.width = 'max-content';
+  const m = { w: el.scrollWidth, h: el.scrollHeight };
+  el.style.width = prev;
+  return m;
+}
+
 /* How far an outline paints past the glyphs, as a fraction of font-size.
    Read from the computed style rather than repeated here, so the stroke width
    stays a single number in app.css. Zero for everything that is not stroked. */
@@ -203,7 +219,7 @@ export function fitLine(slot, txt, min, max){
   if (!box.w || !box.h || !txt.textContent.trim()) return;
 
   apply(txt, REF);
-  const nat = { w: txt.scrollWidth, h: txt.scrollHeight };
+  const nat = natural(txt);
   if (!nat.w || !nat.h){ apply(txt, min); return; }
 
   const px = lineSize(box, nat, min, max, strokeEm(txt));
@@ -223,7 +239,8 @@ export function fitBlock(slot, txt, min, max){
   const prevWS = txt.style.whiteSpace;
   txt.style.whiteSpace = 'nowrap';
   apply(txt, REF);
-  const nat = { w: txt.scrollWidth || 1, h: txt.scrollHeight || 1 };
+  const m   = natural(txt);
+  const nat = { w: m.w || 1, h: m.h || 1 };
   txt.style.whiteSpace = prevWS;
 
   const hi = blockSeed(box, nat, min, max);
@@ -243,7 +260,7 @@ export function fitStack(slot, lines, min){
   const box = boxOf(slot);
   if (!box.w || !box.h || !lines.length) return;
 
-  const nat = lines.map(l => { apply(l, REF); return l.scrollWidth || 1; });
+  const nat = lines.map(l => { apply(l, REF); return natural(l).w || 1; });
 
   stackSizes(box, nat, min).forEach((px, i) => {
     apply(lines[i], px);
@@ -260,7 +277,7 @@ export function fitJustified(slot, lines, min, max, maxTrack){
   const nat = lines.map(l => {
     l.style.letterSpacing = '0px';
     apply(l, REF);
-    return { w: l.scrollWidth || 1, chars: l.textContent.trim().length };
+    return { w: natural(l).w || 1, chars: l.textContent.trim().length };
   });
 
   const opts = { outset: strokeEm(lines[0]), maxTrack };

@@ -20,9 +20,17 @@
    still print with "Background graphics" switched off.
    ========================================================================== */
 
-import { esc, priceLines } from './text.js';
+import { esc, textLines, linesHTML } from './text.js';
 
 export const ASPECT_SPLIT = 1.5;   // cell wider than this → "wide" arrangement
+
+/* Clear air between the price and the detail, as a fraction of cell width.
+   Both are fitted to fill their boxes, so boxes that merely touch print as
+   "R9.99R10 75G" run together — the gap has to be built into the geometry. */
+export const PRICE_GAP = .06;
+
+/* The price box runs from its left edge up to the gap before the detail. */
+const priceTo = (x, y, h, detail) => rect(x, y, detail.x - PRICE_GAP - x, h);
 
 export const BLURB_LINES = [
   'PRICES INCLUDE VAT',
@@ -51,40 +59,52 @@ const MIN_FRACTION = 0.018;
    GEOMETRY — pure, no DOM
    ========================================================================== */
 
-/* ctx: { cellW, cellH, aspect, showBlurb } */
+/* ctx: { cellW, cellH, aspect, showBlurb }
+
+   With the small print off, whatever shared its band takes the whole band —
+   a headline left in half a banner just looks unfinished. */
 
 export function bestbuyLayout(ctx){
   const wide = ctx.aspect >= ASPECT_SPLIT;
   const min  = MIN_FRACTION * ctx.cellH;
 
+  /* The small print is a footer on the white, under the offer — never in the
+     green. Sharing the panel halved the headline in the banner, left a hole
+     in the middle of the column, and printed as tiny white-on-green text,
+     which is the first thing a toner printer muddies. On the white it is
+     black, legible, and the green belongs to BEST BUY alone. */
+  const foot = ctx.showBlurb;
+
   if (wide){
+    const detail = rect(.78, .50, .20, .22);
+    const bottom = foot ? .88 : .96;              // where the price band ends
     return {
       wide, min,
       /* A straight two-stop ramp, no mid stop — roughly the 100° of the CSS
          original, running near-vertically down a left column. */
       panel:    rect(0, 0, .30, 1),
       gradient: { x1:'0', y1:'0', x2:'0.18', y2:'1' },
-      headline: rect(.015, .08, .27, .40),        // BEST / BUY, stacked
-      blurb:    ctx.showBlurb ? rect(.015, .52, .27, .42) : null,
-      name:     rect(.335, .04, .635, .36),
-      price:    rect(.335, .42, .44, .54),
-      detail:   rect(.78, .62, .20, .22),
-      maxPx:    { blurb: .020 * ctx.cellH, detail: .10 * ctx.cellH }
+      headline: rect(.015, .05, .27, .90),        // BEST / BUY, stacked
+      blurb:    foot ? rect(.335, .895, .635, .085) : null,
+      name:     rect(.335, .04, .635, .34),
+      price:    priceTo(.335, .40, bottom - .40, detail),
+      detail,
+      maxPx:    { blurb: .036 * ctx.cellH, detail: .10 * ctx.cellH }
     };
   }
 
+  const detail = rect(.70, .70, .27, .16);
+  const bottom = foot ? .88 : .95;
   return {
     wide, min,
     panel:    rect(0, 0, 1, .24),                 // banner across the top
     gradient: { x1:'0', y1:'0', x2:'1', y2:'0.18' },
-    headline: rect(.035, .03, .50, .18),
-    blurb:    ctx.showBlurb ? rect(.57, .025, .40, .19) : null,
+    headline: rect(.035, .03, .93, .18),
+    blurb:    foot ? rect(.05, .905, .90, .075) : null,
     name:     rect(.05, .28, .90, .25),
-    /* Price stops short of the detail so the two cannot collide in a narrow
-       cell — at 3×2 they were touching. */
-    price:    rect(.05, .55, .58, .36),
-    detail:   rect(.70, .72, .27, .16),
-    maxPx:    { blurb: .015 * ctx.cellH, detail: .09 * ctx.cellH }
+    price:    priceTo(.05, .55, bottom - .55, detail),
+    detail,
+    maxPx:    { blurb: .022 * ctx.cellH, detail: .09 * ctx.cellH }
   };
 }
 
@@ -96,6 +116,8 @@ export function brilliantLayout(ctx){
   const blurbY  = bar + .015;
   const bodyTop = bar + .04;
   const priceY  = bodyTop + .32;
+  const left    = ctx.showBlurb ? .10 : .04;      // body moves into the blurb's strip
+  const detail  = rect(.72, .70, .24, .18);
 
   return {
     wide, min,
@@ -104,9 +126,9 @@ export function brilliantLayout(ctx){
     headline: rect(.02, .012, .96, bar - .024),
     /* Small print runs bottom-to-top along the left edge. */
     blurb:    ctx.showBlurb ? rect(.004, blurbY, .055, .985 - blurbY) : null,
-    name:     rect(.10, bodyTop, .86, .30),
-    price:    rect(.10, priceY, .56, .94 - priceY),
-    detail:   rect(.66, .70, .30, .18),
+    name:     rect(left, bodyTop, .96 - left, .30),
+    price:    priceTo(left, priceY, .94 - priceY, detail),
+    detail,
     maxPx:    { blurb: .018 * ctx.cellH, detail: .11 * ctx.cellH }
   };
 }
@@ -127,16 +149,17 @@ export function woolLayout(ctx){
 
   if (wide){
     const col = .26;
+    const detail = rect(.76, .62, .21, .22);
     return {
       wide, min,
       panel:    rect(0, 0, col, 1),
       gradient: null,
       logo:     rect(.03, .05, col - .06, .30),   // yarn ball only
-      wordmark: rect(.02, .37, .22, .24),
+      wordmark: ctx.showBlurb ? rect(.02, .37, .22, .24) : rect(.02, .37, .22, .58),
       blurb:    ctx.showBlurb ? rect(.02, .64, .22, .32) : null,
       name:     rect(.30, .05, .66, .36),
-      price:    rect(.30, .44, .44, .50),
-      detail:   rect(.76, .62, .21, .22),
+      price:    priceTo(.30, .44, .50, detail),
+      detail,
       maxPx:    { blurb: .050 * ctx.cellH, detail: .10 * ctx.cellH,
                   wordmark: .14 * ctx.cellH }
     };
@@ -149,6 +172,8 @@ export function woolLayout(ctx){
   const bar      = Math.max(.10, Math.min(.30, naturalH));
   const bodyTop  = bar + .04;
   const priceY   = bodyTop + .30;
+  const bottom   = ctx.showBlurb ? .90 : .95;      // price takes the footer's room
+  const detail   = rect(.74, .70, .22, .16);
 
   return {
     wide, min,
@@ -157,11 +182,32 @@ export function woolLayout(ctx){
     logo:     rect(0, 0, 1, bar),
     wordmark: null,
     name:     rect(.06, bodyTop, .88, .28),
-    price:    rect(.06, priceY, .62, .90 - priceY),
-    detail:   rect(.69, .70, .27, .16),
+    price:    priceTo(.06, priceY, bottom - priceY, detail),
+    detail,
     blurb:    ctx.showBlurb ? rect(.06, .905, .88, .085) : null,
     maxPx:    { blurb: .030 * ctx.cellH, detail: .10 * ctx.cellH }
   };
+}
+
+/* A field left empty hands its room to its neighbour rather than leaving a
+   hole: no detail and the price runs on across the detail's box; no price
+   either and the name takes the whole body. Pure — layouts stay item-free
+   and this is applied on top, so it can be tested on its own. */
+export function reflowEmpty(L, item){
+  const hasPrice  = textLines(item && item.price).length > 0;
+  const hasDetail = textLines(item && item.detail).length > 0;
+  const out = { ...L };
+
+  if (!hasDetail){
+    out.price  = rect(L.price.x, L.price.y, L.detail.x + L.detail.w - L.price.x, L.price.h);
+    out.detail = null;
+  }
+  if (!hasPrice && !hasDetail){
+    const bottom = Math.max(L.price.y + L.price.h, L.detail.y + L.detail.h);
+    out.name  = rect(L.name.x, L.name.y, L.name.w, bottom - L.name.y);
+    out.price = null;
+  }
+  return out;
 }
 
 /* ==========================================================================
@@ -229,16 +275,26 @@ function renderPriceStack(cell, r, lines, tasks, min){
 
 function renderName(cell, r, item, tasks, min){
   const s = slot(cell, 'name grp-body', r);
-  tasks.push({ slot: s, txt: text(s, 'n', esc(item.name)), kind:'block', min, max: 10000 });
+  tasks.push({ slot: s, txt: text(s, 'n', linesHTML(item.name)), kind:'block', min, max: 10000 });
 }
 
+/* A multi-line detail stays one fitted block: every line shares a size, and
+   fitLine's linear probe still holds because nowrap only stops *automatic*
+   wrapping — the typed <br>s still break. */
 function renderDetail(cell, r, item, tasks, min, max){
-  if (!item.detail) return;
+  const html = linesHTML(item.detail);
+  if (!html) return;
   const s = slot(cell, 'detail', r);
-  tasks.push({ slot: s, txt: text(s, 'd', esc(item.detail), true), kind:'line', min, max });
+  tasks.push({ slot: s, txt: text(s, 'd', html, true), kind:'line', min, max });
 }
 
 const blurbAll = sep => BLURB_LINES.filter(Boolean).join(sep);
+
+/* One run of small print that may wrap only *between* phrases, so a narrow
+   cell never strands a lone "QUANTITIES" on a line of its own. */
+const blurbPhrases = () => BLURB_LINES.filter(Boolean)
+  .map((l, i, all) => `<span class="phrase">${l}${i < all.length - 1 ? ' &bull;' : ''}</span>`)
+  .join(' ');   // the bullet rides with the phrase before it, never opens a line
 
 /* ==========================================================================
    BEST BUY
@@ -250,7 +306,7 @@ export const BestBuy = {
   layout: bestbuyLayout,
 
   render(cell, item, ctx){
-    const L = bestbuyLayout(ctx);
+    const L = reflowEmpty(bestbuyLayout(ctx), item);
     const tasks = [];
     cell.classList.add('d-bestbuy');
 
@@ -282,23 +338,19 @@ export const BestBuy = {
       tasks.push({ slot: hs, lines: hl, kind:'justified', min: L.min, max: 10000,
                    maxTrack: 0.14 });   // em; past this BUY reads as B U Y
     } else {
-      const hs = slot(cell, 'headline', L.headline, 'va-c ha-l');
+      const hs = slot(cell, 'headline', L.headline);
       tasks.push({ slot: hs, txt: text(hs, 'h', 'BEST BUY', true),
                    kind:'line', min: L.min, max: 10000 });
     }
 
     if (L.blurb){
       const bs = slot(cell, 'blurb', L.blurb);
-      const html = L.wide
-        ? BLURB_LINES[0] + ' &bull; ' + BLURB_LINES[1] + '<br><br>' + BLURB_LINES[2] +
-          (BLURB_LINES[3] ? '<br><br>' + BLURB_LINES[3] : '')
-        : blurbAll('<br>');
-      tasks.push({ slot: bs, txt: text(bs, 'b', html),
-                   kind:'block', min: L.min * 0.6, max: L.maxPx.blurb });
+      tasks.push({ slot: bs, txt: text(bs, 'b', blurbPhrases()),
+                   kind:'block', min: L.min * 0.5, max: L.maxPx.blurb });
     }
 
     renderName(cell, L.name, item, tasks, L.min);
-    renderPriceStack(cell, L.price, priceLines(item.price), tasks, L.min);
+    renderPriceStack(cell, L.price, textLines(item.price), tasks, L.min);
     renderDetail(cell, L.detail, item, tasks, L.min, L.maxPx.detail);
 
     return tasks;
@@ -318,7 +370,7 @@ export const Brilliant = {
   layout: brilliantLayout,
 
   render(cell, item, ctx){
-    const L = brilliantLayout(ctx);
+    const L = reflowEmpty(brilliantLayout(ctx), item);
     const tasks = [];
     cell.classList.add('d-brilliant');
 
@@ -343,7 +395,7 @@ export const Brilliant = {
     }
 
     renderName(cell, L.name, item, tasks, L.min);
-    renderPriceStack(cell, L.price, priceLines(item.price), tasks, L.min);
+    renderPriceStack(cell, L.price, textLines(item.price), tasks, L.min);
     renderDetail(cell, L.detail, item, tasks, L.min, L.maxPx.detail);
 
     return tasks;
@@ -396,7 +448,7 @@ export const Wool = {
   layout: woolLayout,
 
   render(cell, item, ctx){
-    const L = woolLayout(ctx);
+    const L = reflowEmpty(woolLayout(ctx), item);
     const tasks = [];
     cell.classList.add('d-wool');
 
@@ -420,7 +472,7 @@ export const Wool = {
     }
 
     renderName(cell, L.name, item, tasks, L.min);
-    renderPriceStack(cell, L.price, priceLines(item.price), tasks, L.min);
+    renderPriceStack(cell, L.price, textLines(item.price), tasks, L.min);
     renderDetail(cell, L.detail, item, tasks, L.min, L.maxPx.detail);
 
     if (!L.wide && L.blurb){
